@@ -6,10 +6,15 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.Socket;
 
 public class Main extends Application {
 
-    public static void main(String[] args) {
+    final int PORT = 5000;
+    final String addr = "localhost";
+    public static void main(String[] args) throws IOException {
         launch();
     }
 
@@ -19,5 +24,10 @@ public class Main extends Application {
         stage.setScene(new Scene(fxmlLoader.load()));
         stage.setTitle("Chatting Client");
         stage.show();
+        Socket socket = new Socket(addr,PORT);
+        Client client = new Client(socket,this);
+        Thread thread = new Thread(client);
+        thread.start();
+
     }
 }
