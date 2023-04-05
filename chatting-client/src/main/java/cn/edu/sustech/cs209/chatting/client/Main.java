@@ -24,10 +24,10 @@ public class Main extends Application {
         stage.setScene(new Scene(fxmlLoader.load()));
         stage.setTitle("Chatting Client");
         stage.show();
-        Socket socket = new Socket(addr,PORT);
-        Client client = new Client(socket,this);
-        Thread thread = new Thread(client);
-        thread.start();
+//        Socket socket = new Socket(addr,PORT);
+//        Client client = new Client(socket,new Controller());
+//        Thread thread = new Thread(client);
+//        thread.start();
 
     }
 }

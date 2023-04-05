@@ -23,12 +23,19 @@ public class ClientHandler implements Runnable {
         try {
             in = new Scanner(socket.getInputStream());
             out = new PrintWriter(socket.getOutputStream());
+            while (true){
+                String line = in.nextLine();
+                System.out.println("Client sent "+line);
+            }
         } catch (IOException e) {
             e.printStackTrace();
 //                throw new RuntimeException(e);
         } finally {
             try {
                 socket.close();
+                server.socketList.remove(socket);
+                System.out.println("Server connection closed");
+                System.out.printf("Connected clients: %d\n",server.socketList.size());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

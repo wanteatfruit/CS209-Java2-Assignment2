@@ -11,6 +11,7 @@ import java.util.List;
 public class Server {
     ServerSocket serverSocket;
     List<Socket> socketList = new ArrayList<>();
+    List<String> userNames = new ArrayList<>();
 
     public void startServer() throws IOException {
 
@@ -28,10 +29,11 @@ public class Server {
         while (true){
             Socket clientSocket = serverSocket.accept();
             System.out.println("Client connected: " + clientSocket.getInetAddress().getHostAddress());
-            server.socketList.add(clientSocket);
+
             ClientHandler clientHandler = new ClientHandler(clientSocket,server);
             Thread t = new Thread(clientHandler);
             t.start();
+            server.socketList.add(clientSocket);
             System.out.printf("Connected clients: %d\n",server.socketList.size());
         }
     }

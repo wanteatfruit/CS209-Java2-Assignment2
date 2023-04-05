@@ -12,6 +12,8 @@ import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 
+import java.io.IOException;
+import java.net.Socket;
 import java.net.URL;
 import java.util.Objects;
 import java.util.Optional;
@@ -24,10 +26,21 @@ public class Controller implements Initializable {
     ListView<Message> chatContentList;
 
     String username;
+    Client client;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        try {
+            Socket socket = new Socket("localhost",5000);
+            client = new Client(socket,this);
+//            Thread thread = new Thread(client);
+//            thread.start();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
+        System.out.println("Called initialize");
+        System.out.println(this);
         Dialog<String> dialog = new TextInputDialog();
         dialog.setTitle("Login");
         dialog.setHeaderText(null);
@@ -40,6 +53,7 @@ public class Controller implements Initializable {
                      if so, ask the user to change the username
              */
             username = input.get();
+            System.out.println(username);
         } else {
             System.out.println("Invalid username " + input + ", exiting");
             Platform.exit();
