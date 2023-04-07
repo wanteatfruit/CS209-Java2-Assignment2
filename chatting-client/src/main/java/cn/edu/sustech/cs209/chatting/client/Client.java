@@ -1,12 +1,11 @@
 package cn.edu.sustech.cs209.chatting.client;
 
 import cn.edu.sustech.cs209.chatting.common.CommMessage;
-import jdk.internal.util.xml.impl.Input;
 
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Scanner;
+import java.util.List;
 
 public class Client implements Runnable{
     private Socket socket= null;
@@ -27,21 +26,29 @@ public class Client implements Runnable{
         System.out.println("Connected to server");
     }
 
-    public boolean login(String username) throws IOException, ClassNotFoundException {
+    public boolean postLogin(String username) throws IOException, ClassNotFoundException {
 
         System.out.println("Logging in "+username);
-        CommMessage login = new CommMessage(0,username);
+        CommMessage login = new CommMessage(0,"login");
+        ArrayList<String> list = new ArrayList<>();
+        list.add(username);
+        login.setMsgList(list);
         toServer.writeObject(login);
         toServer.flush();
-        System.out.println("Current logged in users");
-        fromServer = new ObjectInputStream(inputStream );
+        System.out.println("Sending login post request");
+        fromServer = new ObjectInputStream(inputStream);
         CommMessage msg = (CommMessage) fromServer.readObject();
-        ArrayList<String> userList = (ArrayList<String>) msg.getMsgList();
-        userList.forEach(System.out::println);
-        if(userList.contains(username)){
-            return false;
-        }
-        return true;
+        return msg.getType() == 200;
+    }
+
+    public List<String> getCurrentUsers() throws IOException, ClassNotFoundException {
+        CommMessage getUsers = new CommMessage(1,"getUsers");
+        toServer.writeObject(getUsers);
+        toServer.flush();
+        System.out.println("Sending get all user request");
+        CommMessage reply = (CommMessage) fromServer.readObject();
+        reply.getMsgList().forEach(System.out::println);
+        return reply.getMsgList();
     }
     @Override
     public void run() {

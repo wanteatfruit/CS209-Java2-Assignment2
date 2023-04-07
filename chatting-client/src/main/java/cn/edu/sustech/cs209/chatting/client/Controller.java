@@ -1,7 +1,6 @@
 package cn.edu.sustech.cs209.chatting.client;
 
 import cn.edu.sustech.cs209.chatting.common.Message;
-import cn.edu.sustech.cs209.chatting.common.CommMessage;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -17,6 +16,7 @@ import javafx.util.Callback;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.URL;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -58,12 +58,12 @@ public class Controller implements Initializable {
              */
             username = input.get();
             try {
-                boolean canLogin = client.login(username);
+                boolean canLogin = client.postLogin(username);
                 if(!canLogin){System.out.println("Invalid username " + input + ", exiting"); Platform.exit();}
+
             } catch (IOException | ClassNotFoundException e) {
                 throw new RuntimeException(e);
             }
-//            System.out.println(username);
         } else {
             System.out.println("Invalid username " + input + ", exiting");
             Platform.exit();
@@ -73,14 +73,18 @@ public class Controller implements Initializable {
     }
 
     @FXML
-    public void createPrivateChat() {
+    public void createPrivateChat() throws IOException, ClassNotFoundException {
         AtomicReference<String> user = new AtomicReference<>();
 
         Stage stage = new Stage();
         ComboBox<String> userSel = new ComboBox<>();
 
         // FIXME: get the user list from server, the current user's name should be filtered out
-        userSel.getItems().addAll("Item 1", "Item 2", "Item 3");
+
+        List<String> currentUsers = client.getCurrentUsers();
+        currentUsers.remove(username);
+
+        userSel.getItems().addAll(currentUsers);
 
         Button okBtn = new Button("OK");
         okBtn.setOnAction(e -> {

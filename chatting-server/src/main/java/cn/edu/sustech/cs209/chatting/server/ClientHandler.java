@@ -10,6 +10,8 @@ import java.util.Scanner;
 
 public class ClientHandler implements Runnable {
 
+    private String username;
+
     private Socket socket;
     private ObjectInputStream in;
     private ObjectOutputStream out;
@@ -31,15 +33,12 @@ public class ClientHandler implements Runnable {
                 System.out.println("Reading lines from client");
                 CommMessage message = (CommMessage) in.readObject();
                 int msgType = message.getType();
-                if(msgType==0){ //login message
-                    String username= message.getMsg();
-                    System.out.println("Client's username is "+username);
-                    // send userlist to client
-                    CommMessage userList = new CommMessage(1, (ArrayList<String>) server.userNames);
-                    out.writeObject(userList);
-                    out.flush();
-                    server.userNames.add(username);
+                if(msgType==0){ //post message
+                    handlePost(message);
+                } else if (msgType==1) { // get
+                    handleGet(message);
                 }
+
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -49,7 +48,9 @@ public class ClientHandler implements Runnable {
         } finally {
             try {
                 socket.close();
+                server.userNames.remove(username);
                 server.socketList.remove(socket);
+
                 System.out.println("Server connection closed");
                 System.out.printf("Connected clients: %d\n",server.socketList.size());
             } catch (IOException e) {
@@ -58,5 +59,41 @@ public class ClientHandler implements Runnable {
         }
 
 
+    }
+
+    public void handlePost(CommMessage msg) throws IOException {
+        switch (msg.getMsg()){
+            case "login":
+                checkLogin(msg);
+                break;
+        }
+    }
+
+    private void checkLogin(CommMessage msg) throws IOException {
+        String username = msg.getMsgList().get(0);
+        CommMessage reply;
+        if (!server.userNames.contains(username)){
+            server.userNames.add(username);
+            System.out.println("Logged in successful");
+            this.username = username;
+            reply = new CommMessage(200,"true");
+        }else{
+            reply = new CommMessage(400,"duplicateName");
+        }
+        out.writeObject(reply);
+        out.flush();
+    }
+
+    public void handleGet(CommMessage msg) throws IOException {
+        switch (msg.getMsg()){
+            case "getUsers":
+                sendCurrentUsers();
+                break;
+        }
+    }
+    public void sendCurrentUsers() throws IOException {
+        CommMessage userList = new CommMessage(0, (ArrayList<String>) server.userNames);
+        out.writeObject(userList);
+        out.flush();
     }
 }
