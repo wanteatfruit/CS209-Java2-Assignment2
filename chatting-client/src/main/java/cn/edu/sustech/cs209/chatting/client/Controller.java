@@ -1,6 +1,8 @@
 package cn.edu.sustech.cs209.chatting.client;
 
 import cn.edu.sustech.cs209.chatting.common.Message;
+import cn.edu.sustech.cs209.chatting.common.CommMessage;
+
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -47,13 +49,20 @@ public class Controller implements Initializable {
         dialog.setContentText("Username:");
 
         Optional<String> input = dialog.showAndWait();
+
+
         if (input.isPresent() && !input.get().isEmpty()) {
             /*
                TODO: Check if there is a user with the same name among the currently logged-in users,
                      if so, ask the user to change the username
              */
             username = input.get();
-            System.out.println(username);
+            try {
+                client.login(username);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+//            System.out.println(username);
         } else {
             System.out.println("Invalid username " + input + ", exiting");
             Platform.exit();

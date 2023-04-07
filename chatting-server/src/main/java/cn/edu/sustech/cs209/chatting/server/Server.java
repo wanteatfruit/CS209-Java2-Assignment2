@@ -28,8 +28,6 @@ public class Server {
         System.out.println("Waiting for clients to connect" );
         while (true){
             Socket clientSocket = serverSocket.accept();
-            System.out.println("Client connected: " + clientSocket.getInetAddress().getHostAddress());
-
             ClientHandler clientHandler = new ClientHandler(clientSocket,server);
             Thread t = new Thread(clientHandler);
             t.start();
