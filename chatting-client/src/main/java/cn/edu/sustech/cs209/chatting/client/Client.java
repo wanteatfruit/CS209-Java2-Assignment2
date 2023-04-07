@@ -1,6 +1,7 @@
 package cn.edu.sustech.cs209.chatting.client;
 
 import cn.edu.sustech.cs209.chatting.common.CommMessage;
+import jdk.internal.util.xml.impl.Input;
 
 import java.io.*;
 import java.net.Socket;
@@ -10,6 +11,7 @@ import java.util.Scanner;
 public class Client implements Runnable{
     private Socket socket= null;
     private ObjectInputStream fromServer;
+    private InputStream inputStream;
     private ObjectOutputStream toServer;
     private Controller controller;
 
@@ -18,24 +20,28 @@ public class Client implements Runnable{
         controller=c;
         System.out.println("Initializing client");
         System.out.println("get stream" );
-        InputStream stream=socket.getInputStream();
+        inputStream=socket.getInputStream();
 //        fromServer = new ObjectInputStream(stream);
         toServer = new ObjectOutputStream(socket.getOutputStream());
 
         System.out.println("Connected to server");
-//        String currentuser = fromServer.readUTF();
-//        System.out.println(currentuser);
     }
 
-    public void login(String username) throws IOException {
+    public boolean login(String username) throws IOException, ClassNotFoundException {
 
-        System.out.println(this.socket);
         System.out.println("Logging in "+username);
-//        toServer.writeUTF(username);
         CommMessage login = new CommMessage(0,username);
         toServer.writeObject(login);
         toServer.flush();
-        System.out.println("Sending complete");
+        System.out.println("Current logged in users");
+        fromServer = new ObjectInputStream(inputStream );
+        CommMessage msg = (CommMessage) fromServer.readObject();
+        ArrayList<String> userList = (ArrayList<String>) msg.getMsgList();
+        userList.forEach(System.out::println);
+        if(userList.contains(username)){
+            return false;
+        }
+        return true;
     }
     @Override
     public void run() {

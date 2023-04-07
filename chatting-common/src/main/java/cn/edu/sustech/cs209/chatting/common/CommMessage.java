@@ -5,9 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CommMessage implements Serializable {
-    public int type=0;
-    public String msg=null;
-    public ArrayList<String> msgList=new ArrayList<>();
+     int type=0;
+     String msg=null;
+     ArrayList<String> msgList=new ArrayList<>();
 
     public CommMessage(int type, String msg){
         this.type = type ;
@@ -24,5 +24,9 @@ public class CommMessage implements Serializable {
 
     public String getMsg() {
         return msg;
+    }
+
+    public int getType() {
+        return type;
     }
 }

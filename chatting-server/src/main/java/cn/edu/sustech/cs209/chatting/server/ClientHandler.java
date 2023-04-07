@@ -5,6 +5,7 @@ import cn.edu.sustech.cs209.chatting.common.CommMessage;
 import javax.xml.crypto.Data;
 import java.io.*;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class ClientHandler implements Runnable {
@@ -29,7 +30,16 @@ public class ClientHandler implements Runnable {
             while (true){
                 System.out.println("Reading lines from client");
                 CommMessage message = (CommMessage) in.readObject();
-                System.out.println("Client sent "+message.getMsg());
+                int msgType = message.getType();
+                if(msgType==0){ //login message
+                    String username= message.getMsg();
+                    System.out.println("Client's username is "+username);
+                    // send userlist to client
+                    CommMessage userList = new CommMessage(1, (ArrayList<String>) server.userNames);
+                    out.writeObject(userList);
+                    out.flush();
+                    server.userNames.add(username);
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();

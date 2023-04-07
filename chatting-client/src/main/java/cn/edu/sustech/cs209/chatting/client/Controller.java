@@ -58,8 +58,9 @@ public class Controller implements Initializable {
              */
             username = input.get();
             try {
-                client.login(username);
-            } catch (IOException e) {
+                boolean canLogin = client.login(username);
+                if(!canLogin){System.out.println("Invalid username " + input + ", exiting"); Platform.exit();}
+            } catch (IOException | ClassNotFoundException e) {
                 throw new RuntimeException(e);
             }
 //            System.out.println(username);
