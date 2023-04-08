@@ -189,21 +189,31 @@ public class Controller implements Initializable {
      */
     @FXML
     public void doSendMessage() {
-        // TODO
-
         String to = chatList.getSelectionModel().getSelectedItem();
-        System.out.println("Chat to "+to);
-        String txt = inputArea.getText().trim();
-        if (txt.equals("")) {
-            Dialog<String> dialog = new ChoiceDialog<>();
-//            dialog.showAndWait();
-            dialog.setContentText("No blank text allowed");
+        if (to == null) {
+            // Display warning message
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("No chat selected");
+            alert.setHeaderText(null);
+            alert.setContentText("Please select a chat to send a message.");
+            alert.showAndWait();
+            return;
         }
 
+        String txt = inputArea.getText().trim();
+        if (txt.equals("")) {
+            // Display warning message
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Empty message");
+            alert.setHeaderText(null);
+            alert.setContentText("No blank text allowed.");
+            alert.showAndWait();
+            return;
+        }
 
         Message message = new Message(System.currentTimeMillis(), username, to, txt);
         chatContentList.getItems().add(message);
-//        chatList.getItems().add("test");
+        inputArea.clear();
     }
 
     /**
