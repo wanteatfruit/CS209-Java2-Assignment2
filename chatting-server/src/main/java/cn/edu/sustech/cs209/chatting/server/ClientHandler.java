@@ -7,6 +7,7 @@ import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ClientHandler implements Runnable {
 
@@ -53,6 +54,7 @@ public class ClientHandler implements Runnable {
 
                 System.out.println("Server connection closed");
                 System.out.printf("Connected clients: %d\n",server.socketList.size());
+                System.out.println(server.userNames);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -72,16 +74,24 @@ public class ClientHandler implements Runnable {
     private void checkLogin(CommMessage msg) throws IOException {
         String username = msg.getMsgList().get(0);
         CommMessage reply;
+        System.out.println(username);
         if (!server.userNames.contains(username)){
             server.userNames.add(username);
             System.out.println("Logged in successful");
             this.username = username;
             reply = new CommMessage(200,"true");
+            out.writeObject(reply);
+            out.flush();
+            //broadcast
+//            for (ClientHandler handler:server.handlers){
+//                handler.sendCurrentUsers();
+//            }
         }else{
             reply = new CommMessage(400,"duplicateName");
+            out.writeObject(reply);
+            out.flush();
         }
-        out.writeObject(reply);
-        out.flush();
+
     }
 
     public void handleGet(CommMessage msg) throws IOException {
@@ -92,7 +102,9 @@ public class ClientHandler implements Runnable {
         }
     }
     public void sendCurrentUsers() throws IOException {
-        CommMessage userList = new CommMessage(0, (ArrayList<String>) server.userNames);
+        CopyOnWriteArrayList<String> strings = new CopyOnWriteArrayList<>(server.userNames);
+        CommMessage userList = new CommMessage(0, strings);
+        System.out.println(userList.getMsgList().size()+" "+ socket.getPort());
         out.writeObject(userList);
         out.flush();
     }

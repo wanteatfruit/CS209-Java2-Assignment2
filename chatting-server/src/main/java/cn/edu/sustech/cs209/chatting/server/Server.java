@@ -7,11 +7,14 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Server {
     ServerSocket serverSocket;
     List<Socket> socketList = new ArrayList<>();
-    List<String> userNames = new ArrayList<>();
+    CopyOnWriteArrayList<String> userNames = new CopyOnWriteArrayList<>();
+
+    List<ClientHandler> handlers = new ArrayList<>();
 
     public void startServer() throws IOException {
 
@@ -29,6 +32,7 @@ public class Server {
         while (true){
             Socket clientSocket = serverSocket.accept();
             ClientHandler clientHandler = new ClientHandler(clientSocket,server);
+            server.handlers.add(clientHandler);
             Thread t = new Thread(clientHandler);
             t.start();
             server.socketList.add(clientSocket);

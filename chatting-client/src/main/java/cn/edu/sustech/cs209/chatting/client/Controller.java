@@ -3,6 +3,10 @@ package cn.edu.sustech.cs209.chatting.client;
 import cn.edu.sustech.cs209.chatting.common.Message;
 
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.concurrent.ScheduledService;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
@@ -27,16 +31,29 @@ public class Controller implements Initializable {
     @FXML
     ListView<Message> chatContentList;
 
+    @FXML
+    Label currentUsername;
+
+    @FXML
+    Label currentOnlineCnt;
+
+    @FXML
+    TextArea inputArea;
+
+    @FXML
+    ListView<String> chatList;
+
     String username;
     Client client;
 
+    private UpdateCheckService service;
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        service = new UpdateCheckService();
         try {
-            Socket socket = new Socket("localhost",5000);
-            client = new Client(socket,this);
-//            Thread thread = new Thread(client);
-//            thread.start();
+            Socket socket = new Socket("localhost", 5000);
+            client = new Client(socket, this);
+
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -59,7 +76,10 @@ public class Controller implements Initializable {
             username = input.get();
             try {
                 boolean canLogin = client.postLogin(username);
-                if(!canLogin){System.out.println("Invalid username " + input + ", exiting"); Platform.exit();}
+                if (!canLogin) {
+                    System.out.println("Invalid username " + input + ", exiting");
+                    Platform.exit();
+                }
 
             } catch (IOException | ClassNotFoundException e) {
                 throw new RuntimeException(e);
@@ -69,7 +89,56 @@ public class Controller implements Initializable {
             Platform.exit();
         }
 
+        currentUsername.setText(username);
         chatContentList.setCellFactory(new MessageCellFactory());
+
+        chatList.getSelectionModel().selectionModeProperty().addListener(new ChangeListener<SelectionMode>() {
+            @Override
+            public void changed(ObservableValue<? extends SelectionMode> observableValue, SelectionMode selectionMode, SelectionMode t1) {
+                if(t1!=null){
+//                    observableValue.
+                }
+            }
+        });
+
+        currentOnlineCnt.textProperty().addListener(new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> observableValue, String oldValue, String newValue) {
+                Platform.runLater(() -> {
+                    currentOnlineCnt.setText(newValue);
+                });
+            }
+        });
+
+        service.setOnSucceeded(e->{
+            try {
+//                System.out.println(String.valueOf(client.getCurrentUsers().size()));
+                currentOnlineCnt.setText(String.valueOf(client.getCurrentUsers().size()));
+            } catch (IOException ex) {
+//                throw new RuntimeException(ex);
+                ex.printStackTrace();
+            } catch (ClassNotFoundException ex) {
+                throw new RuntimeException(ex);
+            }
+        });
+        service.start();
+
+//        Platform.runLater(() -> {
+//            while (true) {
+//                try {
+//                    Thread.sleep(1000);
+//                } catch (InterruptedException e) {
+//                    throw new RuntimeException(e);
+//                }
+//                try {
+//                    System.out.println("setting label");
+//                    currentOnlineCnt.setText(String.valueOf(client.getCurrentUsers().size()));
+//
+//                } catch (IOException | ClassNotFoundException e) {
+//                    throw new RuntimeException(e);
+//                }
+//            }
+//        });
     }
 
     @FXML
@@ -83,11 +152,14 @@ public class Controller implements Initializable {
 
         List<String> currentUsers = client.getCurrentUsers();
         currentUsers.remove(username);
-
+        System.out.println(currentUsers);
+        userSel.getItems().removeAll();
         userSel.getItems().addAll(currentUsers);
 
         Button okBtn = new Button("OK");
+        AtomicReference<String> selected = new AtomicReference<>("");
         okBtn.setOnAction(e -> {
+            selected.set(userSel.getSelectionModel().getSelectedItem());
             user.set(userSel.getSelectionModel().getSelectedItem());
             stage.close();
         });
@@ -101,6 +173,13 @@ public class Controller implements Initializable {
 
         // TODO: if the current user already chatted with the selected user, just open the chat with that user
         // TODO: otherwise, create a new chat item in the left panel, the title should be the selected user's name
+        if (chatList.getItems().contains(selected.get())) {
+            chatList.getSelectionModel().select(selected.get());
+
+        } else {
+            chatList.getItems().add(selected.get());
+        }
+
     }
 
     /**
@@ -126,6 +205,17 @@ public class Controller implements Initializable {
     @FXML
     public void doSendMessage() {
         // TODO
+        String txt = inputArea.getText().trim();
+        if (txt.equals("")) {
+            Dialog<String> dialog = new ChoiceDialog<>();
+//            dialog.showAndWait();
+            dialog.setContentText("No blank text allowed");
+        }
+
+
+        Message message = new Message(120L, "me", "you", txt);
+        chatContentList.getItems().add(message);
+//        chatList.getItems().add("test");
     }
 
     /**
@@ -164,6 +254,20 @@ public class Controller implements Initializable {
 
                     setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
                     setGraphic(wrapper);
+                }
+            };
+        }
+    }
+
+    private static class UpdateCheckService extends ScheduledService<Boolean>{
+
+        @Override
+        protected Task<Boolean> createTask() {
+            return new Task<Boolean>() {
+                @Override
+                protected Boolean call() throws Exception {
+                    updateMessage("Checking for updates");
+                    return Math.random() <0.5;
                 }
             };
         }

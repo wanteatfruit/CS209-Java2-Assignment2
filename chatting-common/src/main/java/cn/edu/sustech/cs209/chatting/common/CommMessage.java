@@ -3,33 +3,41 @@ package cn.edu.sustech.cs209.chatting.common;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class CommMessage implements Serializable {
      int type=0;
 
-     int code;
      String msg=null;
-     ArrayList<String> msgList=new ArrayList<>();
+     CopyOnWriteArrayList<String> msgList=new CopyOnWriteArrayList<>();
+
+     Message chat= null;
 
     public CommMessage(int type, String msg){
         this.type = type ;
         this.msg = msg;
     }
-    public CommMessage(int type,ArrayList<String> msgList){
+    public CommMessage(int type,CopyOnWriteArrayList<String> msgList){
         this.msgList = msgList;
         this.type = type;
     }
 
-    public void setCode(int code) {
-        this.code = code;
-    }
 
-    public List<String> getMsgList() {
+
+    public CopyOnWriteArrayList<String> getMsgList() {
         return msgList;
     }
 
     public String getMsg() {
         return msg;
+    }
+
+    public void setChat(Message chat) {
+        this.chat = chat;
+    }
+
+    public Message getChat() {
+        return chat;
     }
 
     public int getType() {
@@ -40,7 +48,7 @@ public class CommMessage implements Serializable {
         this.msg = msg;
     }
 
-    public void setMsgList(ArrayList<String> msgList) {
+    public void setMsgList(CopyOnWriteArrayList<String> msgList) {
         this.msgList = msgList;
     }
 
