@@ -52,9 +52,9 @@ public class Client implements Runnable{
         CommMessage getUsers = new CommMessage(1,"getUsers");
         toServer.writeObject(getUsers);
         toServer.flush();
-        System.out.println("Sending get all user request");
+//        System.out.println("Sending get all user request");
         CommMessage reply = (CommMessage) fromServer.readObject();
-        reply.getMsgList().forEach(System.out::println);
+//        reply.getMsgList().forEach(System.out::println);
         return reply.getMsgList();
     }
 

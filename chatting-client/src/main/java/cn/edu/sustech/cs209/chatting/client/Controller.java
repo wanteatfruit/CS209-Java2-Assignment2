@@ -123,22 +123,6 @@ public class Controller implements Initializable {
         });
         service.start();
 
-//        Platform.runLater(() -> {
-//            while (true) {
-//                try {
-//                    Thread.sleep(1000);
-//                } catch (InterruptedException e) {
-//                    throw new RuntimeException(e);
-//                }
-//                try {
-//                    System.out.println("setting label");
-//                    currentOnlineCnt.setText(String.valueOf(client.getCurrentUsers().size()));
-//
-//                } catch (IOException | ClassNotFoundException e) {
-//                    throw new RuntimeException(e);
-//                }
-//            }
-//        });
     }
 
     @FXML
@@ -178,6 +162,7 @@ public class Controller implements Initializable {
 
         } else {
             chatList.getItems().add(selected.get());
+            chatList.getSelectionModel().select(selected.get());
         }
 
     }
@@ -205,6 +190,9 @@ public class Controller implements Initializable {
     @FXML
     public void doSendMessage() {
         // TODO
+
+        String to = chatList.getSelectionModel().getSelectedItem();
+        System.out.println("Chat to "+to);
         String txt = inputArea.getText().trim();
         if (txt.equals("")) {
             Dialog<String> dialog = new ChoiceDialog<>();
@@ -213,7 +201,7 @@ public class Controller implements Initializable {
         }
 
 
-        Message message = new Message(120L, "me", "you", txt);
+        Message message = new Message(System.currentTimeMillis(), username, to, txt);
         chatContentList.getItems().add(message);
 //        chatList.getItems().add("test");
     }
