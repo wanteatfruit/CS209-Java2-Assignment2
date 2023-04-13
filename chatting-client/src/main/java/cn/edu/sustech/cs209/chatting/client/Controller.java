@@ -1,5 +1,6 @@
 package cn.edu.sustech.cs209.chatting.client;
 
+import cn.edu.sustech.cs209.chatting.common.CommMessage;
 import cn.edu.sustech.cs209.chatting.common.Message;
 
 import javafx.application.Platform;
@@ -20,10 +21,7 @@ import javafx.util.Callback;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.URL;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.ResourceBundle;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -47,7 +45,10 @@ public class Controller implements Initializable {
     String username;
     Client client;
 
+    HashMap<String, ArrayList<Message>> allChats = new HashMap<>();
+
     private UpdateCheckService service;
+
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         service = new UpdateCheckService();
@@ -94,12 +95,15 @@ public class Controller implements Initializable {
         chatContentList.setCellFactory(new MessageCellFactory());
 
 
-
-
-        service.setOnSucceeded(e->{
+        service.setOnSucceeded(e -> {
             try {
 //                System.out.println(String.valueOf(client.getCurrentUsers().size()));
                 currentOnlineCnt.setText(String.valueOf(client.getCurrentUsers().size()));
+                CommMessage newChat = client.checkNewChat();
+                if(newChat.getMsgList().size()!=0){
+//                    System.out.println(newChat.getMsgList());
+                    chatList.getItems().addAll(newChat.getMsgList());
+                }
 //                Message chat = client.getChat();
 //                System.out.println(chat.getData());
             } catch (IOException ex) {
@@ -112,7 +116,25 @@ public class Controller implements Initializable {
         service.start();
 
 
+        chatList.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> observableValue, String s, String t1) {
+                if (t1 != null) {
+                    try {
+                        CopyOnWriteArrayList<Message> chats = client.getChat(t1); //only get msg from the other side
+                        if (chats != null) {
+                            System.out.println(chats);
+                            allChats.get(t1).addAll(chats);
+                            chatContentList.getItems().clear();
+                            chatContentList.getItems().addAll(allChats.get(t1));
+                        }
+                    } catch (IOException | ClassNotFoundException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
 
+            }
+        });
     }
 
     @FXML
@@ -152,6 +174,7 @@ public class Controller implements Initializable {
 
         } else {
             chatList.getItems().add(selected.get());
+            allChats.put(selected.get(), new ArrayList<>());
             chatList.getSelectionModel().select(selected.get());
         }
 
@@ -211,7 +234,7 @@ public class Controller implements Initializable {
 
     }
 
-    public void receiveMessage(Message message){
+    public void receiveMessage(Message message) {
         chatContentList.getItems().add(message);
     }
 
@@ -256,7 +279,7 @@ public class Controller implements Initializable {
         }
     }
 
-    private static class UpdateCheckService extends ScheduledService<Boolean>{
+    private static class UpdateCheckService extends ScheduledService<Boolean> {
 
         @Override
         protected Task<Boolean> createTask() {
@@ -264,7 +287,16 @@ public class Controller implements Initializable {
                 @Override
                 protected Boolean call() throws Exception {
                     updateMessage("Checking for updates");
-                    return Math.random() <0.01;
+                    return Math.random() < 0.01;
+                }
+
+                @Override
+                protected void succeeded(){
+                    super.succeeded();
+                    Boolean result = getValue();
+                    Platform.runLater(()->{
+
+                    });
                 }
             };
         }

@@ -58,6 +58,12 @@ public class Client implements Runnable{
 //        reply.getMsgList().forEach(System.out::println);
         return reply.getMsgList();
     }
+    public CommMessage checkNewChat() throws IOException, ClassNotFoundException {
+        CommMessage checkChat = new CommMessage(1,"getNewChatPerson");
+        toServer.writeObject(checkChat);
+        toServer.flush();
+        return (CommMessage) fromServer.readObject();
+    }
 
     public boolean postChat(Message chat) throws IOException, ClassNotFoundException {
         CommMessage message = new CommMessage(0,"postChat");
@@ -69,15 +75,16 @@ public class Client implements Runnable{
     }
 
     public CopyOnWriteArrayList<Message> getChat(String from) throws IOException, ClassNotFoundException {
-        CommMessage getChat = new CommMessage(1,"getChat");
-        CopyOnWriteArrayList<String> params = new CopyOnWriteArrayList<>();
-        params.add(from);
-        getChat.setMsgList(params);
-        toServer.writeObject(getChat);
-        toServer.flush();
-        CommMessage reply = (CommMessage) fromServer.readObject();
-        System.out.println(reply.getChats());
-        return reply.getChats();
+//        CommMessage getChat = new CommMessage(1,"getChat");
+//        CopyOnWriteArrayList<String> params = new CopyOnWriteArrayList<>();
+//        params.add(from);
+//        getChat.setMsgList(params);
+//        toServer.writeObject(getChat);
+//        toServer.flush();
+//        CommMessage reply = (CommMessage) fromServer.readObject();
+//        System.out.println(reply.getChats());
+//        return reply.getChats();
+        return null;
     }
     @Override
     public void run() {

@@ -4,10 +4,11 @@ import cn.edu.sustech.cs209.chatting.common.CommMessage;
 import cn.edu.sustech.cs209.chatting.common.Message;
 
 import java.io.*;
-import java.lang.reflect.Array;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ClientHandler implements Runnable {
@@ -18,7 +19,10 @@ public class ClientHandler implements Runnable {
     private ObjectInputStream in;
     private ObjectOutputStream out;
     private Server server;
-    private ConcurrentHashMap<String, CopyOnWriteArrayList<Message>> privateChatList = new ConcurrentHashMap<>();
+
+    private ArrayList<Set<String>> userChatPairs = new ArrayList<>();
+//    private ArrayList<Set>
+//    private ConcurrentHashMap<String, CopyOnWriteArrayList<Message>> privateChatList = new ConcurrentHashMap<>();
 
     public ClientHandler(Socket socket, Server server) throws IOException {
         this.socket = socket;
@@ -79,14 +83,26 @@ public class ClientHandler implements Runnable {
     public void postChat(CommMessage msg) throws IOException {
         Message chat = msg.getChat();
         String chatTo = chat.getSendTo();
-        if(!privateChatList.containsKey(chatTo)){
-            privateChatList.put(chatTo,new CopyOnWriteArrayList<>());
+        //only private
+        Set<String> pair = new HashSet<>();
+        pair.add(this.username);
+        pair.add(chatTo);
+        if(!server.chatPairs.containsKey(pair)){
+            server.chatPairs.put(pair, new ArrayList<>()); //new pair
+            System.out.println("put new pair");
         }
-        privateChatList.get(chatTo).add(chat);
+        server.chatPairs.get(pair).add(chat);
+        if(!userChatPairs.contains(pair)){
+            userChatPairs.add(pair);
+        }
+//        if(!privateChatList.containsKey(chatTo)){
+//            privateChatList.put(chatTo,new CopyOnWriteArrayList<>());
+//        }
+//        privateChatList.get(chatTo).add(chat);
+
 
         System.out.println(chat.getData());
         CommMessage reply = new CommMessage(200,"chat");
-//        reply.setChat(chat);
         out.writeObject(reply);
         out.flush();
     }
@@ -119,18 +135,45 @@ public class ClientHandler implements Runnable {
                 System.out.println("get chat");
                 sendChat(msg); //have params
                 break;
+            case "getNewChatPerson":
+//                System.out.println("check for new chat initiate");
+                sendNewInit();
+                break;
         }
     }
 
-    public void sendChat(CommMessage msg) throws IOException{
-        System.out.println(privateChatList);
-        CommMessage reply = new CommMessage(0,"getChat");
-        String from = msg.getMsgList().get(0);
-        CopyOnWriteArrayList<Message> messages = privateChatList.get(from);
-        System.out.println(messages);
-        reply.setChats(messages);
+    public void sendNewInit() throws IOException {
+        LinkedHashMap<Set<String>, ArrayList<Message>> currentChats =  new LinkedHashMap<>(server.chatPairs);
+        CopyOnWriteArrayList<String> copyOnWriteArrayList = new CopyOnWriteArrayList<>(); //new chats, usernames separated by comma
+        for (Set<String> set: currentChats.keySet()) {
+            if(set.contains(username) && !userChatPairs.contains(set)){ //new chat init from other user
+                userChatPairs.add(set);
+                StringBuilder toSend = new StringBuilder();
+                for(String user:set){
+                    if(user.equals(username)){
+                        continue;
+                    }
+                    toSend.append(user); //only private
+                }
+                copyOnWriteArrayList.add(toSend.toString());
+            }
+        }
+        CommMessage reply = new CommMessage(0,"return new chats");
+        reply.setMsgList(copyOnWriteArrayList);
+        System.out.println(reply.getMsgList());
         out.writeObject(reply);
         out.flush();
+    }
+
+    public void sendChat(CommMessage msg) throws IOException{
+//        System.out.println(privateChatList);
+//        CommMessage reply = new CommMessage(0,"getChat");
+//        String from = msg.getMsgList().get(0);
+//        CopyOnWriteArrayList<Message> messages = privateChatList.get(from);
+//        System.out.println(messages);
+//        reply.setChats(messages);
+//        out.writeObject(reply);
+//        out.flush();
 //        return messages;
 
     }
