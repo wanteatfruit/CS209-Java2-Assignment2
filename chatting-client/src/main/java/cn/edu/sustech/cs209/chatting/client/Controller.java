@@ -99,21 +99,31 @@ public class Controller implements Initializable {
             try {
 //                System.out.println(String.valueOf(client.getCurrentUsers().size()));
                 currentOnlineCnt.setText(String.valueOf(client.getCurrentUsers().size()));
-                CommMessage newChat = client.checkNewChat();
+                CommMessage privateChat = client.checkNewChat();
+                CommMessage groupChat = client.checkNewGroupChat();
 
-                if(newChat.getMsgList().size()!=0){
-                    for(String s: newChat.getMsgList()){
-                        String[] chatTo = s.split(Client.DELIMETER);
-                        if(chatTo.length>1){
-                            ArrayList<String> arrayList = (ArrayList<String>) Arrays.asList(chatTo);
-                            String name = getChatRoomName(arrayList);
-                            chatList.getItems().add(name);
-                        }else{
-                            chatList.getItems().add(chatTo[0]);
-                        }
-                    }
-//                    chatList.getItems().addAll(newChat.getMsgList()); //add new chat window
+                for (int i = 0; i < groupChat.getMsgList().size(); i++) {
+                    String[] groupMembers = groupChat.getMsgList().get(i).split(Client.DELIMETER);
+                    System.out.println(groupMembers);
+                    ArrayList<String> arrayList = new ArrayList<>(Arrays.asList(groupMembers));
+                    String name = getChatRoomName(arrayList);
+                    chatList.getItems().add(name);
                 }
+
+//                if (privateChat.getMsgList().size() != 0) {
+////                    for(String s: privateChat.getMsgList()){
+////                        String[] chatTo = s.split(Client.DELIMETER);
+////                        System.out.println(Arrays.toString(chatTo));
+////                        if(chatTo.length>1){
+////                            ArrayList<String> arrayList = new ArrayList<>(Arrays.asList(chatTo));
+////                            String name = getChatRoomName(arrayList);
+////                            chatList.getItems().add(name);
+////                        }else{
+////                            chatList.getItems().add(chatTo[0]);
+////                        }
+////                    }
+//                    chatList.getItems().addAll(privateChat.getMsgList()); //add new chat window
+//                }
 //                for(String chattingTo:chatList.getItems()) {
 //                    if (chattingTo != null) { //check income msg in the current window
 //                        CopyOnWriteArrayList<Message> chats = client.getChat(chattingTo);
@@ -127,13 +137,13 @@ public class Controller implements Initializable {
 //                }
                 String chattingTo = chatList.getSelectionModel().getSelectedItem();
                 CopyOnWriteArrayList<Message> chats;
-                if(chattingTo!=null){ //check income msg in the current window
-                    if(!IsGroupChat(chattingTo)){
+                if (chattingTo != null) { //check income msg in the current window
+                    if (!IsGroupChat(chattingTo)) {
                         chats = client.getChat(chattingTo);
-                    }else {
+                    } else {
                         chats = client.getGroupChat(formatGroupName(chattingTo));
                     }
-                    if(chats!=null){
+                    if (chats != null) {
                         allChats.get(chattingTo).clear();
                         allChats.get(chattingTo).addAll(chats);
                         chatContentList.getItems().clear();
@@ -155,18 +165,19 @@ public class Controller implements Initializable {
             @Override
             public void changed(ObservableValue<? extends String> observableValue, String s, String t1) {
                 if (t1 != null) {
-                    try {CopyOnWriteArrayList<Message> chats;
-                        if(IsGroupChat(t1)){
+                    try {
+                        CopyOnWriteArrayList<Message> chats;
+                        if (IsGroupChat(t1)) {
                             chats = client.getGroupChat(formatGroupName(t1));
-                        }else{
+                        } else {
                             chats = client.getChat(t1); //only get msg from the other side
                         }
 
                         if (chats != null) {
-                            System.out.println(chats);
+//                            System.out.println(chats);
                             //receiver's side
-                            if(!allChats.containsKey(t1)){
-                                allChats.put(t1,new ArrayList<>());
+                            if (!allChats.containsKey(t1)) {
+                                allChats.put(t1, new ArrayList<>());
                             }
                             allChats.get(t1).clear();
                             allChats.get(t1).addAll(chats);
@@ -267,17 +278,24 @@ public class Controller implements Initializable {
         List<String> selectedNames = result.get();
         Collections.sort(selectedNames);
         chatRoomName = getChatRoomName(selectedNames);
-        chatList.getItems().add(chatRoomName);
+        if (chatList.getItems().contains(chatRoomName)) {
+            chatList.getSelectionModel().select(chatRoomName);
+
+        } else {
+            chatList.getItems().add(chatRoomName);
+            allChats.put(formatGroupName(chatRoomName), new ArrayList<>()); //sender's side
+            chatList.getSelectionModel().select(chatRoomName);
+        }
         System.out.println(formatGroupName(chatRoomName));
 
     }
 
     private static String getChatRoomName(List<String> selectedNames) {
         String chatRoomName;
-        if(selectedNames.size()>3){
-            chatRoomName = String.join(", ", selectedNames.subList(0,3))+"... ("+ selectedNames.size()+")";
-        }else{
-            chatRoomName = String.join(", ", selectedNames)+" ("+ selectedNames.size()+")";
+        if (selectedNames.size() > 3) {
+            chatRoomName = String.join(", ", selectedNames.subList(0, 3)) + "... (" + selectedNames.size() + ")";
+        } else {
+            chatRoomName = String.join(", ", selectedNames) + " (" + selectedNames.size() + ")";
         }
         return chatRoomName;
     }
@@ -314,12 +332,12 @@ public class Controller implements Initializable {
 
         Message message;
 
-        if(IsGroupChat(to)){ //tmp group chat check
-             message = new Message(System.currentTimeMillis(), username, formatGroupName(to), txt);
-             client.postGroupChat(message);
-        }else{
-             message = new Message(System.currentTimeMillis(), username, to, txt);
-             client.postChat(message);
+        if (IsGroupChat(to)) { //tmp group chat check
+            message = new Message(System.currentTimeMillis(), username, formatGroupName(to), txt);
+            client.postGroupChat(message);
+        } else {
+            message = new Message(System.currentTimeMillis(), username, to, txt);
+            client.postChat(message);
         }
         chatContentList.getItems().add(message);
         inputArea.clear();
@@ -330,8 +348,8 @@ public class Controller implements Initializable {
         return to.endsWith(")");
     }
 
-    public String formatGroupName(String groupName){
-        return groupName.replaceAll("\\(\\d+\\)$", "");
+    public String formatGroupName(String groupName) {
+        return groupName.replaceAll("\\(\\d+\\)$", "").trim();
     }
 
     public void receiveMessage(Message message) {
@@ -391,10 +409,10 @@ public class Controller implements Initializable {
                 }
 
                 @Override
-                protected void succeeded(){
+                protected void succeeded() {
                     super.succeeded();
                     Boolean result = getValue();
-                    Platform.runLater(()->{
+                    Platform.runLater(() -> {
 
                     });
                 }

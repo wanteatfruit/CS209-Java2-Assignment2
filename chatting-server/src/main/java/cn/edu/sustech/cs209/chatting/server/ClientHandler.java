@@ -170,15 +170,13 @@ public class ClientHandler implements Runnable {
         LinkedHashMap<Set<String>, ArrayList<Message>> currentChats =  new LinkedHashMap<>(server.chatPairs);
         CopyOnWriteArrayList<String> copyOnWriteArrayList = new CopyOnWriteArrayList<>(); //new chats, usernames separated by comma
         for (Set<String> set: currentChats.keySet()) {
-            if(set.contains(username) && !userChatPairs.contains(set)){ //new chat init from other user
+            if(set.contains(username) && !userChatPairs.contains(set) && set.size()>2){ //new chat init from other user
                 userChatPairs.add(set);
                 StringBuilder toSend = new StringBuilder();
                 for(String user:set){
-                    if(user.equals(username)){
-                        continue;
-                    }
-                    toSend.append(user).append(", "); //only private
+                    toSend.append(user).append(", ");
                 }
+
                 copyOnWriteArrayList.add(toSend.toString());
             }
         }
@@ -215,14 +213,14 @@ public class ClientHandler implements Runnable {
         LinkedHashMap<Set<String>, ArrayList<Message>> currentChats =  new LinkedHashMap<>(server.chatPairs);
         CopyOnWriteArrayList<String> copyOnWriteArrayList = new CopyOnWriteArrayList<>(); //new chats, usernames separated by comma
         for (Set<String> set: currentChats.keySet()) {
-            if(set.contains(username) && !userChatPairs.contains(set)){ //new chat init from other user
+            if(set.contains(username) && !userChatPairs.contains(set) && set.size()==2){ //new chat init from other user
                 userChatPairs.add(set);
                 StringBuilder toSend = new StringBuilder();
                 for(String user:set){
                     if(user.equals(username)){
                         continue;
                     }
-                    toSend.append(user).append(", ");
+                    toSend.append(user);
                 }
                 copyOnWriteArrayList.add(toSend.toString());
             }

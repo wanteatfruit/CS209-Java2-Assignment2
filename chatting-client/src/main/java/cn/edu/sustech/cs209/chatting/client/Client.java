@@ -61,6 +61,7 @@ public class Client implements Runnable{
     }
     public CommMessage checkNewChat() throws IOException, ClassNotFoundException {
         CommMessage checkChat = new CommMessage(1,"getNewChatPerson");
+
         toServer.writeObject(checkChat);
         toServer.flush();
         return (CommMessage) fromServer.readObject();
@@ -90,7 +91,7 @@ public class Client implements Runnable{
         toServer.writeObject(getChat);
         toServer.flush();
         CommMessage reply = (CommMessage) fromServer.readObject();
-        System.out.println(reply.getChats());
+//        System.out.println(reply.getChats());
         return reply.getChats();
     }
 
@@ -103,7 +104,7 @@ public class Client implements Runnable{
         toServer.writeObject(getChat);
         toServer.flush();
         CommMessage reply = (CommMessage) fromServer.readObject();
-        System.out.println(reply.getChats());
+//        System.out.println(reply.getChats());
         return reply.getChats();
 
     }
