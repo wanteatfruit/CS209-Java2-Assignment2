@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Client implements Runnable{
+    public static final String DELIMETER = ", ";
     private Socket socket= null;
     private ObjectInputStream fromServer;
     private InputStream inputStream;
@@ -65,6 +66,13 @@ public class Client implements Runnable{
         return (CommMessage) fromServer.readObject();
     }
 
+    public CommMessage checkNewGroupChat() throws IOException, ClassNotFoundException {
+        CommMessage check = new CommMessage(1,"getNewChatGroup");
+        toServer.writeObject(check);
+        toServer.flush();
+        return (CommMessage) fromServer.readObject();
+    }
+
     public boolean postChat(Message chat) throws IOException, ClassNotFoundException {
         CommMessage message = new CommMessage(0,"postChat");
         message.setChat(chat);
@@ -84,6 +92,29 @@ public class Client implements Runnable{
         CommMessage reply = (CommMessage) fromServer.readObject();
         System.out.println(reply.getChats());
         return reply.getChats();
+    }
+
+    public CopyOnWriteArrayList<Message> getGroupChat(String group) throws IOException, ClassNotFoundException {
+        CommMessage getChat = new CommMessage(1,"getGroupChat");
+        //group separated by commas+space
+        String[] userNames = group.split(DELIMETER);
+        CopyOnWriteArrayList<String> users = new CopyOnWriteArrayList<>(Arrays.asList(userNames));
+        getChat.setMsgList(users);
+        toServer.writeObject(getChat);
+        toServer.flush();
+        CommMessage reply = (CommMessage) fromServer.readObject();
+        System.out.println(reply.getChats());
+        return reply.getChats();
+
+    }
+
+    public boolean postGroupChat(Message chat) throws IOException, ClassNotFoundException {
+        CommMessage message = new CommMessage(0,"postGroupChat");
+        message.setChat(chat);
+        toServer.writeObject(message);
+        toServer.flush();
+        CommMessage reply = (CommMessage) fromServer.readObject();
+        return reply.getType()==200;
     }
     @Override
     public void run() {

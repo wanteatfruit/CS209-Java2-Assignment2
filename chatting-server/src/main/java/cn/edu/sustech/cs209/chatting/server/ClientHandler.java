@@ -5,10 +5,7 @@ import cn.edu.sustech.cs209.chatting.common.Message;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ClientHandler implements Runnable {
@@ -76,8 +73,34 @@ public class ClientHandler implements Runnable {
                 break;
             case "postChat":
                 postChat(msg);
+                break;
+            case "postGroupChat":
+                postGroupChat(msg);
+                break;
 
         }
+    }
+
+    public void postGroupChat(CommMessage msg) throws IOException {
+        Message chat = msg.getChat();
+        //format send to as comma separation
+        String chatTo = chat.getSendTo();
+        String[] groupMembers = chatTo.split(", ");
+        Set<String> pair = new HashSet<>();
+        pair.add(username);
+        pair.addAll(Arrays.asList(groupMembers));
+
+        if(!server.chatPairs.containsKey(pair)){
+            server.chatPairs.put(pair, new ArrayList<>()); //new pair
+            System.out.println("put new group");
+        }
+        server.chatPairs.get(pair).add(chat);
+        if(!userChatPairs.contains(pair)){
+            userChatPairs.add(pair);
+        }
+        CommMessage reply = new CommMessage(200,"chat");
+        out.writeObject(reply);
+        out.flush();
     }
 
     public void postChat(CommMessage msg) throws IOException {
@@ -134,7 +157,58 @@ public class ClientHandler implements Runnable {
 //                System.out.println("check for new chat initiate");
                 sendNewInit();
                 break;
+                case "getNewChatGroup":
+                    sendNewGroupInit();
+                    break;
+            case "getGroupChat":
+                sendGroupChat(msg);
+                break;
         }
+    }
+
+    public void sendNewGroupInit() throws IOException {
+        LinkedHashMap<Set<String>, ArrayList<Message>> currentChats =  new LinkedHashMap<>(server.chatPairs);
+        CopyOnWriteArrayList<String> copyOnWriteArrayList = new CopyOnWriteArrayList<>(); //new chats, usernames separated by comma
+        for (Set<String> set: currentChats.keySet()) {
+            if(set.contains(username) && !userChatPairs.contains(set)){ //new chat init from other user
+                userChatPairs.add(set);
+                StringBuilder toSend = new StringBuilder();
+                for(String user:set){
+                    if(user.equals(username)){
+                        continue;
+                    }
+                    toSend.append(user).append(", "); //only private
+                }
+                copyOnWriteArrayList.add(toSend.toString());
+            }
+        }
+        CommMessage reply = new CommMessage(0,"return new chats");
+        reply.setMsgList(copyOnWriteArrayList);
+        System.out.println(reply.getMsgList());
+        out.writeObject(reply);
+        out.flush();
+    }
+
+
+    public void sendGroupChat(CommMessage commMessage) throws IOException{
+        LinkedHashMap<Set<String>, ArrayList<Message>> currentChats =  new LinkedHashMap<>(server.chatPairs);
+        //private
+        Set<String> currentChat = new HashSet<>();
+        currentChat.add(username); // current
+        CopyOnWriteArrayList<String> groupMembers = commMessage.getMsgList();
+        currentChat.addAll(groupMembers);
+        ArrayList<Message> chats = currentChats.get(currentChat);
+        if(chats==null){
+            CommMessage reply = new CommMessage(0,"null messages");
+            out.writeObject(reply);
+            out.flush();
+            return;
+        }
+        CopyOnWriteArrayList<Message> copyOnWriteArrayList = new CopyOnWriteArrayList<>(chats);
+        CommMessage reply = new CommMessage(0,"reply send chat");
+        reply.setChats(copyOnWriteArrayList);
+        out.writeObject(reply);
+        out.flush();
     }
 
     public void sendNewInit() throws IOException {
@@ -148,7 +222,7 @@ public class ClientHandler implements Runnable {
                     if(user.equals(username)){
                         continue;
                     }
-                    toSend.append(user); //only private
+                    toSend.append(user).append(", ");
                 }
                 copyOnWriteArrayList.add(toSend.toString());
             }
