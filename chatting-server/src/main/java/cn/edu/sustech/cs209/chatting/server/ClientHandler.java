@@ -1,12 +1,13 @@
 package cn.edu.sustech.cs209.chatting.server;
 
 import cn.edu.sustech.cs209.chatting.common.CommMessage;
+import cn.edu.sustech.cs209.chatting.common.Message;
 
-import javax.xml.crypto.Data;
 import java.io.*;
+import java.lang.reflect.Array;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Scanner;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ClientHandler implements Runnable {
@@ -17,6 +18,7 @@ public class ClientHandler implements Runnable {
     private ObjectInputStream in;
     private ObjectOutputStream out;
     private Server server;
+    private ConcurrentHashMap<String, CopyOnWriteArrayList<Message>> privateChatList = new ConcurrentHashMap<>();
 
     public ClientHandler(Socket socket, Server server) throws IOException {
         this.socket = socket;
@@ -31,7 +33,7 @@ public class ClientHandler implements Runnable {
         try {
 
             while (true){
-                System.out.println("Reading lines from client");
+//                System.out.println("Reading lines from client");
                 CommMessage message = (CommMessage) in.readObject();
                 int msgType = message.getType();
                 if(msgType==0){ //post message
@@ -68,7 +70,25 @@ public class ClientHandler implements Runnable {
             case "login":
                 checkLogin(msg);
                 break;
+            case "postChat":
+                postChat(msg);
+
         }
+    }
+
+    public void postChat(CommMessage msg) throws IOException {
+        Message chat = msg.getChat();
+        String chatTo = chat.getSendTo();
+        if(!privateChatList.containsKey(chatTo)){
+            privateChatList.put(chatTo,new CopyOnWriteArrayList<>());
+        }
+        privateChatList.get(chatTo).add(chat);
+
+        System.out.println(chat.getData());
+        CommMessage reply = new CommMessage(200,"chat");
+//        reply.setChat(chat);
+        out.writeObject(reply);
+        out.flush();
     }
 
     private void checkLogin(CommMessage msg) throws IOException {
@@ -82,10 +102,6 @@ public class ClientHandler implements Runnable {
             reply = new CommMessage(200,"true");
             out.writeObject(reply);
             out.flush();
-            //broadcast
-//            for (ClientHandler handler:server.handlers){
-//                handler.sendCurrentUsers();
-//            }
         }else{
             reply = new CommMessage(400,"duplicateName");
             out.writeObject(reply);
@@ -99,12 +115,29 @@ public class ClientHandler implements Runnable {
             case "getUsers":
                 sendCurrentUsers();
                 break;
+            case "getChat":
+                System.out.println("get chat");
+                sendChat(msg); //have params
+                break;
         }
+    }
+
+    public void sendChat(CommMessage msg) throws IOException{
+        System.out.println(privateChatList);
+        CommMessage reply = new CommMessage(0,"getChat");
+        String from = msg.getMsgList().get(0);
+        CopyOnWriteArrayList<Message> messages = privateChatList.get(from);
+        System.out.println(messages);
+        reply.setChats(messages);
+        out.writeObject(reply);
+        out.flush();
+//        return messages;
+
     }
     public void sendCurrentUsers() throws IOException {
         CopyOnWriteArrayList<String> strings = new CopyOnWriteArrayList<>(server.userNames);
         CommMessage userList = new CommMessage(0, strings);
-        System.out.println(userList.getMsgList().size()+" "+ socket.getPort());
+//        System.out.println(userList.getMsgList().size()+" "+ socket.getPort());
         out.writeObject(userList);
         out.flush();
     }

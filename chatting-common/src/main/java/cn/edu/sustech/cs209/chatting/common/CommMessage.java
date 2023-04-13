@@ -11,6 +11,7 @@ public class CommMessage implements Serializable {
      String msg=null;
      CopyOnWriteArrayList<String> msgList=new CopyOnWriteArrayList<>();
 
+     CopyOnWriteArrayList<Message> chats = new CopyOnWriteArrayList<>();
      Message chat= null;
 
     public CommMessage(int type, String msg){
@@ -26,6 +27,14 @@ public class CommMessage implements Serializable {
 
     public CopyOnWriteArrayList<String> getMsgList() {
         return msgList;
+    }
+
+    public CopyOnWriteArrayList<Message> getChats() {
+        return chats;
+    }
+
+    public void setChats(CopyOnWriteArrayList<Message> chats) {
+        this.chats = chats;
     }
 
     public String getMsg() {

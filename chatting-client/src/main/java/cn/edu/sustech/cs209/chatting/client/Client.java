@@ -6,6 +6,7 @@ import cn.edu.sustech.cs209.chatting.common.Message;
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -58,26 +59,25 @@ public class Client implements Runnable{
         return reply.getMsgList();
     }
 
-    public boolean postChat(String chat) throws IOException, ClassNotFoundException {
-        System.out.println("Sending chat message "+chat);
+    public boolean postChat(Message chat) throws IOException, ClassNotFoundException {
         CommMessage message = new CommMessage(0,"postChat");
-        Message chatMessage = new Message(new Date().getTime(), controller.username, "",chat);
-        message.setChat(chatMessage);
+        message.setChat(chat);
         toServer.writeObject(message);
         toServer.flush();
-        fromServer = new ObjectInputStream(inputStream);
         CommMessage reply = (CommMessage) fromServer.readObject();
         return reply.getType()==200;
     }
 
-    public List<String> getChat() throws IOException, ClassNotFoundException {
+    public CopyOnWriteArrayList<Message> getChat(String from) throws IOException, ClassNotFoundException {
         CommMessage getChat = new CommMessage(1,"getChat");
+        CopyOnWriteArrayList<String> params = new CopyOnWriteArrayList<>();
+        params.add(from);
+        getChat.setMsgList(params);
         toServer.writeObject(getChat);
         toServer.flush();
         CommMessage reply = (CommMessage) fromServer.readObject();
-        Message chat = reply.getChat();
-        reply.getMsgList().forEach(System.out::println);
-        return reply.getMsgList();
+        System.out.println(reply.getChats());
+        return reply.getChats();
     }
     @Override
     public void run() {

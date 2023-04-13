@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class Controller implements Initializable {
@@ -92,28 +93,15 @@ public class Controller implements Initializable {
         currentUsername.setText(username);
         chatContentList.setCellFactory(new MessageCellFactory());
 
-        chatList.getSelectionModel().selectionModeProperty().addListener(new ChangeListener<SelectionMode>() {
-            @Override
-            public void changed(ObservableValue<? extends SelectionMode> observableValue, SelectionMode selectionMode, SelectionMode t1) {
-                if(t1!=null){
-//                    observableValue.
-                }
-            }
-        });
 
-        currentOnlineCnt.textProperty().addListener(new ChangeListener<String>() {
-            @Override
-            public void changed(ObservableValue<? extends String> observableValue, String oldValue, String newValue) {
-                Platform.runLater(() -> {
-                    currentOnlineCnt.setText(newValue);
-                });
-            }
-        });
+
 
         service.setOnSucceeded(e->{
             try {
 //                System.out.println(String.valueOf(client.getCurrentUsers().size()));
                 currentOnlineCnt.setText(String.valueOf(client.getCurrentUsers().size()));
+//                Message chat = client.getChat();
+//                System.out.println(chat.getData());
             } catch (IOException ex) {
 //                throw new RuntimeException(ex);
                 ex.printStackTrace();
@@ -122,6 +110,8 @@ public class Controller implements Initializable {
             }
         });
         service.start();
+
+
 
     }
 
@@ -188,7 +178,7 @@ public class Controller implements Initializable {
      * After sending the message, you should clear the text input field.
      */
     @FXML
-    public void doSendMessage() {
+    public void doSendMessage() throws IOException, ClassNotFoundException {
         String to = chatList.getSelectionModel().getSelectedItem();
         if (to == null) {
             // Display warning message
@@ -212,8 +202,17 @@ public class Controller implements Initializable {
         }
 
         Message message = new Message(System.currentTimeMillis(), username, to, txt);
+        client.postChat(message);
         chatContentList.getItems().add(message);
         inputArea.clear();
+        // Start the message checker thread
+//        MessageChecker messageChecker = new MessageChecker(this, "to",client);
+//        messageChecker.start();
+
+    }
+
+    public void receiveMessage(Message message){
+        chatContentList.getItems().add(message);
     }
 
     /**
@@ -265,7 +264,7 @@ public class Controller implements Initializable {
                 @Override
                 protected Boolean call() throws Exception {
                     updateMessage("Checking for updates");
-                    return Math.random() <0.5;
+                    return Math.random() <0.01;
                 }
             };
         }
