@@ -95,11 +95,6 @@ public class ClientHandler implements Runnable {
         if(!userChatPairs.contains(pair)){
             userChatPairs.add(pair);
         }
-//        if(!privateChatList.containsKey(chatTo)){
-//            privateChatList.put(chatTo,new CopyOnWriteArrayList<>());
-//        }
-//        privateChatList.get(chatTo).add(chat);
-
 
         System.out.println(chat.getData());
         CommMessage reply = new CommMessage(200,"chat");

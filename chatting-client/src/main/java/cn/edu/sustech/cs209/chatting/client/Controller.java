@@ -101,12 +101,30 @@ public class Controller implements Initializable {
                 currentOnlineCnt.setText(String.valueOf(client.getCurrentUsers().size()));
                 CommMessage newChat = client.checkNewChat();
                 if(newChat.getMsgList().size()!=0){
-//                    System.out.println(newChat.getMsgList());
-                    chatList.getItems().addAll(newChat.getMsgList());
+                    chatList.getItems().addAll(newChat.getMsgList()); //add new chat window
+                }
+//                for(String chattingTo:chatList.getItems()) {
+//                    if (chattingTo != null) { //check income msg in the current window
+//                        CopyOnWriteArrayList<Message> chats = client.getChat(chattingTo);
+//                        if (chats != null) {
+//                            allChats.get(chattingTo).clear();
+//                            allChats.get(chattingTo).addAll(chats);
+//                            chatContentList.getItems().clear();
+//                            chatContentList.getItems().addAll(allChats.get(chattingTo));
+//                        }
+//                    }
+//                }
+                String chattingTo = chatList.getSelectionModel().getSelectedItem();
+                if(chattingTo!=null){ //check income msg in the current window
+                    CopyOnWriteArrayList<Message> chats = client.getChat(chattingTo);
+                    if(chats!=null){
+                        allChats.get(chattingTo).clear();
+                        allChats.get(chattingTo).addAll(chats);
+                        chatContentList.getItems().clear();
+                        chatContentList.getItems().addAll(allChats.get(chattingTo));
+                    }
                 }
 
-//                Message chat = client.getChat();
-//                System.out.println(chat.getData());
             } catch (IOException ex) {
 //                throw new RuntimeException(ex);
                 ex.printStackTrace();
@@ -197,7 +215,43 @@ public class Controller implements Initializable {
      * UserA, UserB (2)
      */
     @FXML
-    public void createGroupChat() {
+    public void createGroupChat() throws IOException, ClassNotFoundException {
+        Dialog<List<String>> dialog = new Dialog<>();
+        // Create a multi-select list of users
+        ListView<String> listView = new ListView<>();
+        listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        List<String> currentUsers = client.getCurrentUsers();
+        currentUsers.remove(username);
+        listView.getItems().removeAll();
+        listView.getItems().addAll(currentUsers);
+
+        dialog.getDialogPane().setContent(listView);
+
+        ButtonType okButton = new ButtonType("OK", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelButton = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+        dialog.getDialogPane().getButtonTypes().addAll(okButton, cancelButton);
+
+        // Convert the result to a list of selected usernames
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == okButton) {
+                List<String> selectedUsers = new ArrayList<>(listView.getSelectionModel().getSelectedItems());
+                selectedUsers.add(username); // add current client
+                return selectedUsers;
+            }
+            return null;
+        });
+
+        Optional<List<String>> result = dialog.showAndWait();
+        String chatRoomName;
+        List<String> selectedNames = result.get();
+        Collections.sort(selectedNames);
+        if(selectedNames.size()>3){
+            chatRoomName = String.join(", ",selectedNames.subList(0,3))+"... ("+selectedNames.size()+")";
+        }else{
+            chatRoomName = String.join(", ",selectedNames)+" ("+selectedNames.size()+")";
+        }
+        chatList.getItems().add(chatRoomName);
+
     }
 
     /**
