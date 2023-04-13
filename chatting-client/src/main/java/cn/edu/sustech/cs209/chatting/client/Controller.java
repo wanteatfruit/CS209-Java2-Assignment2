@@ -104,6 +104,7 @@ public class Controller implements Initializable {
 //                    System.out.println(newChat.getMsgList());
                     chatList.getItems().addAll(newChat.getMsgList());
                 }
+
 //                Message chat = client.getChat();
 //                System.out.println(chat.getData());
             } catch (IOException ex) {
@@ -124,6 +125,11 @@ public class Controller implements Initializable {
                         CopyOnWriteArrayList<Message> chats = client.getChat(t1); //only get msg from the other side
                         if (chats != null) {
                             System.out.println(chats);
+                            //receiver's side
+                            if(!allChats.containsKey(t1)){
+                                allChats.put(t1,new ArrayList<>());
+                            }
+                            allChats.get(t1).clear();
                             allChats.get(t1).addAll(chats);
                             chatContentList.getItems().clear();
                             chatContentList.getItems().addAll(allChats.get(t1));
@@ -174,7 +180,7 @@ public class Controller implements Initializable {
 
         } else {
             chatList.getItems().add(selected.get());
-            allChats.put(selected.get(), new ArrayList<>());
+            allChats.put(selected.get(), new ArrayList<>()); //sender's side
             chatList.getSelectionModel().select(selected.get());
         }
 

@@ -165,16 +165,24 @@ public class ClientHandler implements Runnable {
         out.flush();
     }
 
-    public void sendChat(CommMessage msg) throws IOException{
-//        System.out.println(privateChatList);
-//        CommMessage reply = new CommMessage(0,"getChat");
-//        String from = msg.getMsgList().get(0);
-//        CopyOnWriteArrayList<Message> messages = privateChatList.get(from);
-//        System.out.println(messages);
-//        reply.setChats(messages);
-//        out.writeObject(reply);
-//        out.flush();
-//        return messages;
+    public void sendChat(CommMessage commMessage) throws IOException{
+        LinkedHashMap<Set<String>, ArrayList<Message>> currentChats =  new LinkedHashMap<>(server.chatPairs);
+        //private
+        Set<String> currentChat = new HashSet<>();
+        currentChat.add(username); // current
+        currentChat.add(commMessage.getMsgList().get(0)); // other side
+        ArrayList<Message> chats = currentChats.get(currentChat);
+        if(chats==null){
+            CommMessage reply = new CommMessage(0,"null messages");
+            out.writeObject(reply);
+            out.flush();
+            return;
+        }
+        CopyOnWriteArrayList<Message> copyOnWriteArrayList = new CopyOnWriteArrayList<>(chats);
+        CommMessage reply = new CommMessage(0,"reply send chat");
+        reply.setChats(copyOnWriteArrayList);
+        out.writeObject(reply);
+        out.flush();
 
     }
     public void sendCurrentUsers() throws IOException {

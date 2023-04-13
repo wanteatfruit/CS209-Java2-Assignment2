@@ -75,16 +75,15 @@ public class Client implements Runnable{
     }
 
     public CopyOnWriteArrayList<Message> getChat(String from) throws IOException, ClassNotFoundException {
-//        CommMessage getChat = new CommMessage(1,"getChat");
-//        CopyOnWriteArrayList<String> params = new CopyOnWriteArrayList<>();
-//        params.add(from);
-//        getChat.setMsgList(params);
-//        toServer.writeObject(getChat);
-//        toServer.flush();
-//        CommMessage reply = (CommMessage) fromServer.readObject();
-//        System.out.println(reply.getChats());
-//        return reply.getChats();
-        return null;
+        CommMessage getChat = new CommMessage(1,"getChat");
+        CopyOnWriteArrayList<String> params = new CopyOnWriteArrayList<>();
+        params.add(from);
+        getChat.setMsgList(params);
+        toServer.writeObject(getChat);
+        toServer.flush();
+        CommMessage reply = (CommMessage) fromServer.readObject();
+        System.out.println(reply.getChats());
+        return reply.getChats();
     }
     @Override
     public void run() {
