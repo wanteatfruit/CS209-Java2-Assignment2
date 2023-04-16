@@ -109,32 +109,10 @@ public class Controller implements Initializable {
                     String name = getChatRoomName(arrayList);
                     chatList.getItems().add(name);
                 }
-
-//                if (privateChat.getMsgList().size() != 0) {
-////                    for(String s: privateChat.getMsgList()){
-////                        String[] chatTo = s.split(Client.DELIMETER);
-////                        System.out.println(Arrays.toString(chatTo));
-////                        if(chatTo.length>1){
-////                            ArrayList<String> arrayList = new ArrayList<>(Arrays.asList(chatTo));
-////                            String name = getChatRoomName(arrayList);
-////                            chatList.getItems().add(name);
-////                        }else{
-////                            chatList.getItems().add(chatTo[0]);
-////                        }
-////                    }
-//                    chatList.getItems().addAll(privateChat.getMsgList()); //add new chat window
-//                }
-//                for(String chattingTo:chatList.getItems()) {
-//                    if (chattingTo != null) { //check income msg in the current window
-//                        CopyOnWriteArrayList<Message> chats = client.getChat(chattingTo);
-//                        if (chats != null) {
-//                            allChats.get(chattingTo).clear();
-//                            allChats.get(chattingTo).addAll(chats);
-//                            chatContentList.getItems().clear();
-//                            chatContentList.getItems().addAll(allChats.get(chattingTo));
-//                        }
-//                    }
-//                }
+                for (int i = 0; i < privateChat.getMsgList().size(); i++) {
+                    String name = privateChat.getMsgList().get(i);
+                    chatList.getItems().add(name);
+                }
                 String chattingTo = chatList.getSelectionModel().getSelectedItem();
                 CopyOnWriteArrayList<Message> chats;
                 if (chattingTo != null) { //check income msg in the current window
@@ -147,7 +125,7 @@ public class Controller implements Initializable {
                         allChats.get(chattingTo).clear();
                         allChats.get(chattingTo).addAll(chats);
                         chatContentList.getItems().clear();
-                        chatContentList.getItems().addAll(allChats.get(chattingTo));
+                        chatContentList.getItems().addAll(0,allChats.get(chattingTo));
                     }
                 }
 
@@ -159,6 +137,22 @@ public class Controller implements Initializable {
             }
         });
         service.start();
+
+        Thread thread = new Thread(()->{
+            //Background work
+            while (true) {
+                // Listen for messages from server
+                try {
+                    client.getCurrentUsers();
+                } catch (IOException | ClassNotFoundException e) {
+                    throw new RuntimeException(e);
+                }
+                Platform.runLater(() -> {
+                    // Do something with the messages
+//                    client.run();
+                });
+            }
+        });
 
 
         chatList.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>() {
@@ -182,7 +176,7 @@ public class Controller implements Initializable {
                             allChats.get(t1).clear();
                             allChats.get(t1).addAll(chats);
                             chatContentList.getItems().clear();
-                            chatContentList.getItems().addAll(allChats.get(t1));
+                            chatContentList.getItems().addAll(0,allChats.get(t1));
                         }
                     } catch (IOException | ClassNotFoundException e) {
                         throw new RuntimeException(e);
@@ -236,16 +230,6 @@ public class Controller implements Initializable {
 
     }
 
-    /**
-     * A new dialog should contain a multi-select list, showing all user's name.
-     * You can select several users that will be joined in the group chat, including yourself.
-     * <p>
-     * The naming rule for group chats is similar to WeChat:
-     * If there are > 3 users: display the first three usernames, sorted in lexicographic order, then use ellipsis with the number of users, for example:
-     * UserA, UserB, UserC... (10)
-     * If there are <= 3 users: do not display the ellipsis, for example:
-     * UserA, UserB (2)
-     */
     @FXML
     public void createGroupChat() throws IOException, ClassNotFoundException {
         Dialog<List<String>> dialog = new Dialog<>();
@@ -339,7 +323,9 @@ public class Controller implements Initializable {
             message = new Message(System.currentTimeMillis(), username, to, txt);
             client.postChat(message);
         }
-        chatContentList.getItems().add(message);
+        chatContentList.getItems().add(0,message);
+        System.out.println(chatContentList.getItems());
+//        chatContentList.getItems().clear();
         inputArea.clear();
 
     }
