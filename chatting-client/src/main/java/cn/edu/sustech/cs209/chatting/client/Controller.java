@@ -104,7 +104,7 @@ public class Controller implements Initializable {
 
                 for (int i = 0; i < groupChat.getMsgList().size(); i++) {
                     String[] groupMembers = groupChat.getMsgList().get(i).split(Client.DELIMETER);
-                    System.out.println(groupMembers);
+                    System.out.println(Arrays.toString(groupMembers));
                     ArrayList<String> arrayList = new ArrayList<>(Arrays.asList(groupMembers));
                     String name = getChatRoomName(arrayList);
                     chatList.getItems().add(name);
@@ -122,10 +122,15 @@ public class Controller implements Initializable {
                         chats = client.getGroupChat(formatGroupName(chattingTo));
                     }
                     if (chats != null) {
-                        allChats.get(chattingTo).clear();
-                        allChats.get(chattingTo).addAll(chats);
-                        chatContentList.getItems().clear();
-                        chatContentList.getItems().addAll(0,allChats.get(chattingTo));
+                        chats.removeAll(allChats.get(chattingTo));
+                        if(chats.size()>0){
+                            allChats.get(chattingTo).addAll(chats);
+                            for (Message msg:chats){
+                                if(!msg.getSentBy().equals(username)) {
+                                    chatContentList.getItems().add(msg);
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -168,15 +173,14 @@ public class Controller implements Initializable {
                         }
 
                         if (chats != null) {
-//                            System.out.println(chats);
-                            //receiver's side
                             if (!allChats.containsKey(t1)) {
                                 allChats.put(t1, new ArrayList<>());
+                            }else{
+                                chats.removeAll(allChats.get(t1));
                             }
-                            allChats.get(t1).clear();
                             allChats.get(t1).addAll(chats);
-                            chatContentList.getItems().clear();
-                            chatContentList.getItems().addAll(0,allChats.get(t1));
+//                            chatContentList.getItems().clear();
+                            chatContentList.getItems().addAll(allChats.get(t1));
                         }
                     } catch (IOException | ClassNotFoundException e) {
                         throw new RuntimeException(e);
@@ -323,7 +327,7 @@ public class Controller implements Initializable {
             message = new Message(System.currentTimeMillis(), username, to, txt);
             client.postChat(message);
         }
-        chatContentList.getItems().add(0,message);
+        chatContentList.getItems().add(message);
         System.out.println(chatContentList.getItems());
 //        chatContentList.getItems().clear();
         inputArea.clear();
