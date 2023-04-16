@@ -57,7 +57,15 @@ public class Controller implements Initializable {
             client = new Client(socket, this);
 
         } catch (IOException e) {
-            throw new RuntimeException(e);
+//            throw new RuntimeException(e);
+            System.out.println("The server is not started");
+            // Display warning message
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("The server is not started");
+            alert.setHeaderText(null);
+            alert.setContentText("The server is not started");
+            alert.showAndWait();
+            System.exit(0);
         }
 
         System.out.println("Called initialize");
@@ -99,8 +107,16 @@ public class Controller implements Initializable {
             try {
 //                System.out.println(String.valueOf(client.getCurrentUsers().size()));
                 currentOnlineCnt.setText(String.valueOf(client.getCurrentUsers().size()));
-                CommMessage privateChat = client.checkNewChat();
-                CommMessage groupChat = client.checkNewGroupChat();
+                CommMessage privateChat = null;
+                CommMessage groupChat = null;
+                try {
+                     privateChat = client.checkNewChat();
+                     groupChat = client.checkNewGroupChat();
+                }catch (IOException exception){
+                    exception.printStackTrace();
+                    System.out.println("message getting fail");
+                    return;
+                }
 
                 for (int i = 0; i < groupChat.getMsgList().size(); i++) {
                     String[] groupMembers = groupChat.getMsgList().get(i).split(Client.DELIMETER);
@@ -136,9 +152,30 @@ public class Controller implements Initializable {
 
             } catch (IOException ex) {
 //                throw new RuntimeException(ex);
-                ex.printStackTrace();
+//                ex.printStackTrace();
+                System.out.println("IOException");
+                System.out.println("The server is not started");
+                // Display warning message
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("The server is not started");
+                alert.setHeaderText(null);
+                alert.setContentText("The server is not started");
+                alert.showAndWait();
+                System.exit(0);
+                try {
+                    Socket socket = new Socket("localhost", 5000);
+                    client.setSocket(socket);
+                } catch (IOException exc) {
+                    System.out.println("Attempting to reconnect");
+                    Alert connectAttempt = new Alert(Alert.AlertType.WARNING);
+                    connectAttempt.setTitle("The server is not started");
+                    connectAttempt.setHeaderText(null);
+                    connectAttempt.setContentText("The server is not started");
+                    connectAttempt.showAndWait();
+                }
             } catch (ClassNotFoundException ex) {
-                throw new RuntimeException(ex);
+//                throw new RuntimeException(ex);
+                System.out.println("Runtime exception");
             }
         });
         service.start();
@@ -179,7 +216,6 @@ public class Controller implements Initializable {
                                 chats.removeAll(allChats.get(t1));
                             }
                             allChats.get(t1).addAll(chats);
-//                            chatContentList.getItems().clear();
                             chatContentList.getItems().addAll(allChats.get(t1));
                         }
                     } catch (IOException | ClassNotFoundException e) {
@@ -395,7 +431,7 @@ public class Controller implements Initializable {
                 @Override
                 protected Boolean call() throws Exception {
                     updateMessage("Checking for updates");
-                    return Math.random() < 0.01;
+                    return false;
                 }
 
                 @Override
