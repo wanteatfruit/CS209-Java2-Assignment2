@@ -15,10 +15,12 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Callback;
+import javafx.util.Pair;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -29,6 +31,7 @@ import java.net.URL;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.prefs.Preferences;
 
 public class Controller implements Initializable {
 
@@ -49,6 +52,7 @@ public class Controller implements Initializable {
     ListView<String> chatList;
 
     String username;
+    String pw;
     Client client;
 
     HashMap<String, ArrayList<Message>> allChats = new LinkedHashMap<>();
@@ -57,6 +61,7 @@ public class Controller implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        System.out.println(System.getProperty("user.dir")); //relative path is chatting-client
         service = new UpdateCheckService();
         try {
             Socket socket = new Socket("localhost", 5000);
@@ -76,22 +81,101 @@ public class Controller implements Initializable {
 
         System.out.println("Called initialize");
         System.out.println(this);
-        Dialog<String> dialog = new TextInputDialog();
+
+
+
+
+
+        Dialog<Pair<String, String>> registerDialog = new Dialog<>();
+        registerDialog.setTitle("Register");
+        registerDialog.setHeaderText(null);
+
+// Set the button types
+        ButtonType registerButtonType = new ButtonType("Register", ButtonBar.ButtonData.OK_DONE);
+        registerDialog.getDialogPane().getButtonTypes().addAll(registerButtonType, ButtonType.CANCEL);
+
+// Create the username and password labels and fields
+        GridPane registerPane = new GridPane();
+        registerPane.setHgap(10);
+        registerPane.setVgap(10);
+        registerPane.setPadding(new Insets(20, 150, 10, 10));
+
+        TextField usernameField = new TextField();
+        usernameField.setPromptText("Username");
+        PasswordField passwordField = new PasswordField();
+        passwordField.setPromptText("Password");
+
+        registerPane.add(new Label("Username:"), 0, 0);
+        registerPane.add(usernameField, 1, 0);
+        registerPane.add(new Label("Password:"), 0, 1);
+        registerPane.add(passwordField, 1, 1);
+
+        registerDialog.getDialogPane().setContent(registerPane);
+
+// Convert the result to a username-password-pair when the register button is clicked
+        registerDialog.setResultConverter(dialogButton -> {
+            if (dialogButton == registerButtonType) {
+                return new Pair<>(usernameField.getText(), passwordField.getText());
+            }
+            return null;
+        });
+
+        Optional<Pair<String, String>> result = registerDialog.showAndWait();
+
+        result.ifPresent(usernamePassword -> {
+            try {
+                client.registerUser(result.get().getKey(),result.get().getValue());
+            } catch (IOException | ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        Dialog<Pair<String, String>> dialog = new Dialog<>();
         dialog.setTitle("Login");
         dialog.setHeaderText(null);
-        dialog.setContentText("Username:");
+        ButtonType loginButton = new ButtonType("Login", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(loginButton, ButtonType.CANCEL);
 
-        Optional<String> input = dialog.showAndWait();
+
+        GridPane loginPane = new GridPane();
+        loginPane.setHgap(10);
+        loginPane.setVgap(10);
+        loginPane.setPadding(new Insets(20, 150, 10, 10));
+
+        TextField loginUsername = new TextField();
+        usernameField.setPromptText("Username");
+        PasswordField loginPW = new PasswordField();
+        passwordField.setPromptText("Password");
+
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == loginButton) {
+                return new Pair<>(loginUsername.getText(), loginPW.getText());
+            }
+            return null;
+        });
+
+        loginPane.add(new Label("Username:"), 0, 0);
+        loginPane.add(loginUsername, 1, 0);
+        loginPane.add(new Label("Password:"), 0, 1);
+        loginPane.add(loginPW, 1, 1);
+
+        dialog.getDialogPane().setContent(loginPane);
 
 
-        if (input.isPresent() && !input.get().isEmpty()) {
+
+        Optional<Pair<String, String>> input = dialog.showAndWait();
+
+
+
+        if (input.isPresent() && !input.get().getKey().isEmpty() && !input.get().getValue().isEmpty()) {
             /*
                TODO: Check if there is a user with the same name among the currently logged-in users,
                      if so, ask the user to change the username
              */
-            username = input.get();
+            username = input.get().getKey();
+            pw = input.get().getValue();
             try {
-                boolean canLogin = client.postLogin(username);
+                boolean canLogin = client.postLogin(username, pw);
                 if (!canLogin) {
                     System.out.println("Invalid username " + input + ", exiting");
                     Platform.exit();
@@ -111,11 +195,10 @@ public class Controller implements Initializable {
 
         service.setOnSucceeded(e -> {
             try {
-//                System.out.println(String.valueOf(client.getCurrentUsers().size()));
                 List<String> currentUsers = client.getCurrentUsers();
                 currentOnlineCnt.setText(String.valueOf(currentUsers.size()));
-                CommMessage privateChat = null;
-                CommMessage groupChat = null;
+                CommMessage privateChat;
+                CommMessage groupChat;
                 try {
                      privateChat = client.checkNewChat();
                      groupChat = client.checkNewGroupChat();

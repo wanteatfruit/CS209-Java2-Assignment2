@@ -36,29 +36,41 @@ public class Client implements Runnable{
         System.out.println("Connected to server");
     }
 
-    public boolean postLogin(String username) throws IOException, ClassNotFoundException {
+    public boolean postLogin(String username,String password) throws IOException, ClassNotFoundException {
 
         System.out.println("Logging in "+username);
         CommMessage login = new CommMessage(0,"login");
         CopyOnWriteArrayList<String> list = new CopyOnWriteArrayList<>();
         list.add(username);
+        list.add(password);
         login.setMsgList(list);
         toServer.writeObject(login);
         toServer.flush();
         System.out.println("Sending login post request");
-//        fromServer = new ObjectInputStream(inputStream);
         CommMessage msg = (CommMessage) fromServer.readObject();
 
         return msg.getType() == 200;
     }
 
+    public void registerUser(String username,String password) throws IOException, ClassNotFoundException {
+        System.out.println("Registering");
+        CommMessage register = new CommMessage(0,"register");
+        CopyOnWriteArrayList<String> list = new CopyOnWriteArrayList<>();
+        list.add(username);
+        list.add(password);
+        register.setMsgList(list);
+        toServer.writeObject(register);
+        toServer.flush();
+        CommMessage msg = (CommMessage) fromServer.readObject();
+        return;
+    }
+
+
     public List<String> getCurrentUsers() throws IOException, ClassNotFoundException {
         CommMessage getUsers = new CommMessage(1,"getUsers");
         toServer.writeObject(getUsers);
         toServer.flush();
-//        System.out.println("Sending get all user request");
         CommMessage reply = (CommMessage) fromServer.readObject();
-//        reply.getMsgList().forEach(System.out::println);
         return reply.getMsgList();
     }
     public CommMessage checkNewChat() throws IOException, ClassNotFoundException {

@@ -17,6 +17,7 @@ public class Server {
     ServerSocket serverSocket;
     List<Socket> socketList = new ArrayList<>();
     CopyOnWriteArrayList<String> userNames = new CopyOnWriteArrayList<>();
+    LinkedHashMap<String,String> userPW = new LinkedHashMap<>();
 //    List<Set<String>> chatPairs = new ArrayList<>();
     LinkedHashMap<Set<String>, ArrayList<Message>> chatPairs = new LinkedHashMap<>();
     List<ClientHandler> handlers = new ArrayList<>();

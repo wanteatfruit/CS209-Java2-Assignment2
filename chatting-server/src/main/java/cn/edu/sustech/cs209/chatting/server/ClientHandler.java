@@ -11,6 +11,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class ClientHandler implements Runnable {
 
     private String username;
+    private String password;
 
     private Socket socket;
     private ObjectInputStream in;
@@ -80,12 +81,27 @@ public class ClientHandler implements Runnable {
             case "postFile":
                 postFile(msg);
                 break;
+            case "register":
+                register(msg);
+                break;
         }
+    }
+
+    public void register(CommMessage msg) throws IOException {
+        CopyOnWriteArrayList<String> params = msg.getMsgList();
+        String username = params.get(0);
+        String pw= params.get(1);
+        if(!server.userPW.containsKey(username)){
+            server.userPW.put(username,pw);
+        }
+        CommMessage message = new CommMessage(200,"ok");
+        out.writeObject(message);
+        out.flush();
     }
 
     public void postFile(CommMessage msg) throws IOException {
         byte[] fileBytes = msg.getFileBytes();
-        System.out.println("Storing ifle");
+        System.out.println("Storing file");
         File file = new File("D:\\SUSTech2023S\\CS209\\CS209-Java2-Assignment2\\chatting-server\\src\\main\\java\\cn\\edu\\sustech\\cs209\\chatting\\server\\files\\file.txt");
         FileOutputStream fileOutputStream = new FileOutputStream(file);
         fileOutputStream.write(fileBytes);
@@ -141,20 +157,26 @@ public class ClientHandler implements Runnable {
 
     private void checkLogin(CommMessage msg) throws IOException {
         String username = msg.getMsgList().get(0);
+        String pw = msg.getMsgList().get(1);
         CommMessage reply;
         System.out.println(username);
         if (!server.userNames.contains(username)){
+
+            if(server.userPW.get(username)==null ||  !server.userPW.get(username).equals(pw)){
+                reply = new CommMessage(400,"wrongPassword");
+                out.writeObject(reply);
+                out.flush();
+                return;
+            }
             server.userNames.add(username);
             System.out.println("Logged in successful");
             this.username = username;
             reply = new CommMessage(200,"true");
-            out.writeObject(reply);
-            out.flush();
         }else{
             reply = new CommMessage(400,"duplicateName");
-            out.writeObject(reply);
-            out.flush();
         }
+        out.writeObject(reply);
+        out.flush();
 
     }
 
