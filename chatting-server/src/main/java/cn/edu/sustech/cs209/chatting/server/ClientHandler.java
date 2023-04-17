@@ -164,11 +164,12 @@ public class ClientHandler implements Runnable {
     }
 
     private void checkLogin(CommMessage msg) throws IOException {
+        CopyOnWriteArrayList<String> userNames = new CopyOnWriteArrayList<>(server.userNames);
         String username = msg.getMsgList().get(0);
         String pw = msg.getMsgList().get(1);
         CommMessage reply;
         System.out.println(username);
-        if (!server.userNames.contains(username)){
+        if (!userNames.contains(username)){
 
             if(server.userPW.get(username)==null ||  !server.userPW.get(username).equals(pw)){
                 reply = new CommMessage(400,"wrongPassword");
@@ -214,6 +215,7 @@ public class ClientHandler implements Runnable {
     }
 
     public void sendFile(CommMessage comm) throws IOException {
+
         File dir = new File("files/"+comm.getMsgList().get(1)+"/"+comm.getMsgList().get(0));
         System.out.println(dir);
         if(dir.exists()){

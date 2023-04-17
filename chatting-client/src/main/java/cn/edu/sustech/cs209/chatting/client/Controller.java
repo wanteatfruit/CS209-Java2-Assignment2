@@ -195,6 +195,7 @@ public class Controller implements Initializable {
 
         service.setOnSucceeded(e -> {
             try {
+                chatContentList.setCellFactory(new MessageCellFactory());
                 List<String> currentUsers = client.getCurrentUsers();
                 currentOnlineCnt.setText(String.valueOf(currentUsers.size()));
                 CommMessage privateChat;
@@ -232,6 +233,7 @@ public class Controller implements Initializable {
                         chats.removeAll(allChats.get(chattingTo));
                         if(chats.size()>0){
                             allChats.get(chattingTo).addAll(chats);
+                            chatContentList.setCellFactory(new MessageCellFactory());
                             for (Message msg:chats){
                                 if(!msg.getSentBy().equals(username)) {
                                     chatContentList.getItems().add(msg);
@@ -309,6 +311,8 @@ public class Controller implements Initializable {
                                 chats.removeAll(allChats.get(t1));
                             }
                             allChats.get(t1).addAll(chats);
+                            chatContentList.getItems().clear();
+                            chatContentList.setCellFactory(new MessageCellFactory());
                             chatContentList.getItems().addAll(allChats.get(t1));
                         }
                     } catch (IOException | ClassNotFoundException e) {
@@ -427,17 +431,8 @@ public class Controller implements Initializable {
      */
     @FXML
     public void doSendMessage() throws IOException, ClassNotFoundException {
+        if(checkEmptyTo()) return;
         String to = chatList.getSelectionModel().getSelectedItem();
-        if (to == null) {
-            // Display warning message
-            Alert alert = new Alert(Alert.AlertType.WARNING);
-            alert.setTitle("No chat selected");
-            alert.setHeaderText(null);
-            alert.setContentText("Please select a chat to send a message.");
-            alert.showAndWait();
-            return;
-        }
-
         String txt = inputArea.getText().trim();
         if (txt.equals("")) {
             // Display warning message
@@ -465,9 +460,11 @@ public class Controller implements Initializable {
 
     }
 @FXML
-    public void receiveFile(){
+    public void receiveFile() throws IOException, ClassNotFoundException {
+    if (checkEmptyTo()) return;
+    String to = chatList.getSelectionModel().getSelectedItem();
     FileChooser fileChooser = new FileChooser();
-    File init = new File("D:\\SUSTech2023S\\CS209\\CS209-Java2-Assignment2\\files\\"+username);
+    File init = new File("D:\\SUSTech2023S\\CS209\\CS209-Java2-Assignment2\\files\\"+to);
     if(!init.exists()){
         init.mkdir();
     }
@@ -486,10 +483,30 @@ public class Controller implements Initializable {
             throw new RuntimeException(e);
         }
     }
+    Message message;
+
+    }
+
+    private boolean checkEmptyTo() {
+        String to = chatList.getSelectionModel().getSelectedItem();
+        if (to == null) {
+            // Display warning message
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("No chat selected");
+            alert.setHeaderText(null);
+            alert.setContentText("Please select a chat to send a message.");
+            alert.showAndWait();
+            return true;
+        }
+        return false;
     }
 
     @FXML
-    public void doSendFile(){
+    public void doSendFile() throws IOException, ClassNotFoundException {
+        if(checkEmptyTo()){
+            return;
+        }
+        String to = chatList.getSelectionModel().getSelectedItem();
         FileChooser fileChooser = new FileChooser();
         File selectedFile = fileChooser.showOpenDialog(null);
         fileChooser.getExtensionFilters().addAll(
@@ -504,6 +521,20 @@ public class Controller implements Initializable {
                 throw new RuntimeException(e);
             }
         }
+
+        Message message;
+
+        if (IsGroupChat(to)) { //tmp group chat check
+            message = new Message(System.currentTimeMillis(), username, formatGroupName(to), "sending a file");
+            client.postGroupChat(message);
+        } else {
+            message = new Message(System.currentTimeMillis(), username, to, "Sending a file");
+            client.postChat(message);
+        }
+        chatContentList.getItems().add(message);
+        System.out.println(chatContentList.getItems());
+//        chatContentList.getItems().clear();
+        inputArea.clear();
     }
 
     private static boolean IsGroupChat(String to) {
