@@ -104,6 +104,7 @@ public class Client implements Runnable{
             message.setFileBytes(file.toPath());
             CopyOnWriteArrayList<String> name = new CopyOnWriteArrayList<>();
             name.add(file.getName());
+            name.add(controller.username);
             message.setMsgList(name);
             toServer.writeObject(message);
             toServer.flush();
@@ -112,14 +113,28 @@ public class Client implements Runnable{
         return reply.getType()==200;
     }
 
-    public byte[] getFile(String path) throws IOException, ClassNotFoundException {
-        CommMessage message = new CommMessage(0,"getFile");
+    public byte[] getFile(String filename) throws IOException, ClassNotFoundException {
+        CommMessage message = new CommMessage(1,"getFile");
         CopyOnWriteArrayList<String> copyOnWriteArrayList = new CopyOnWriteArrayList<>();
-        copyOnWriteArrayList.add(path);
+        copyOnWriteArrayList.add(filename);
+        copyOnWriteArrayList.add(controller.username);
         message.setMsgList(copyOnWriteArrayList);
+        System.out.println(filename );
+        System.out.println(controller.username);
+        System.out.println("receiving file from server");
         toServer.writeObject(message);
         toServer.flush();
         CommMessage reply = (CommMessage) fromServer.readObject();
+        File dir = new File("D:\\SUSTech2023S\\CS209\\CS209-Java2-Assignment2\\client-files\\"+controller.username);
+        if(!dir.exists()){
+            boolean result = dir.mkdir();
+        }
+        System.out.println(filename);
+        System.out.println(dir.getName());
+        File file = new File(dir+"/"+filename);
+        FileOutputStream fileOutputStream = new FileOutputStream(file);
+        fileOutputStream.write(reply.getFileBytes());
+        fileOutputStream.close();
         return reply.getFileBytes();
     }
 

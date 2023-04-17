@@ -363,6 +363,8 @@ public class Controller implements Initializable {
 
     }
 
+
+
     @FXML
     public void createGroupChat() throws IOException, ClassNotFoundException {
         Dialog<List<String>> dialog = new Dialog<>();
@@ -461,6 +463,29 @@ public class Controller implements Initializable {
 //        chatContentList.getItems().clear();
         inputArea.clear();
 
+    }
+@FXML
+    public void receiveFile(){
+    FileChooser fileChooser = new FileChooser();
+    File init = new File("D:\\SUSTech2023S\\CS209\\CS209-Java2-Assignment2\\files\\"+username);
+    if(!init.exists()){
+        init.mkdir();
+    }
+    fileChooser.setInitialDirectory(init);
+    fileChooser.getExtensionFilters().addAll(
+            new FileChooser.ExtensionFilter("Text Files", "*.txt")
+    );
+    File selectedFile = fileChooser.showOpenDialog(null);
+
+    if (selectedFile != null) {
+        try {
+            client.getFile(selectedFile.toPath().getFileName().toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
     }
 
     @FXML

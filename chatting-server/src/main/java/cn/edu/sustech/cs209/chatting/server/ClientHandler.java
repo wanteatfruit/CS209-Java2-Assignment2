@@ -104,11 +104,17 @@ public class ClientHandler implements Runnable {
         byte[] fileBytes = msg.getFileBytes();
         System.out.println("Storing file");
         System.out.println(System.getProperty("user.dir"));
-        File file = new File("files/"+msg.getMsgList().get(0));
+//        String dir = "files/"+msg.getMsgList().get(1);
+        File dir = new File("files/"+msg.getMsgList().get(1));
+        if(!dir.exists()){
+            boolean result = dir.mkdir();
+        }
+        File file = new File(dir+"/"+msg.getMsgList().get(0));
         FileOutputStream fileOutputStream = new FileOutputStream(file);
         fileOutputStream.write(fileBytes);
         fileOutputStream.close();
         CommMessage reply = new CommMessage(200,"chat");
+
         out.writeObject(reply);
         out.flush();
     }
@@ -207,8 +213,15 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    public void sendFile(CommMessage comm){
-
+    public void sendFile(CommMessage comm) throws IOException {
+        File dir = new File("files/"+comm.getMsgList().get(1)+"/"+comm.getMsgList().get(0));
+        System.out.println(dir);
+        if(dir.exists()){
+            CommMessage reply = new CommMessage(0,"ok");
+            reply.setFileBytes(dir.toPath());
+            out.writeObject(reply);
+            out.flush();
+        }
     }
 
     public void sendNewGroupInit() throws IOException {
