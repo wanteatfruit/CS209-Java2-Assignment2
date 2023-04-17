@@ -6,6 +6,7 @@ import cn.edu.sustech.cs209.chatting.common.Message;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.ObservableList;
 import javafx.concurrent.ScheduledService;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
@@ -15,10 +16,14 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.Socket;
 import java.net.URL;
 import java.util.*;
@@ -29,6 +34,7 @@ public class Controller implements Initializable {
 
     @FXML
     ListView<Message> chatContentList;
+
 
     @FXML
     Label currentUsername;
@@ -45,7 +51,7 @@ public class Controller implements Initializable {
     String username;
     Client client;
 
-    HashMap<String, ArrayList<Message>> allChats = new HashMap<>();
+    HashMap<String, ArrayList<Message>> allChats = new LinkedHashMap<>();
 
     private UpdateCheckService service;
 
@@ -106,7 +112,8 @@ public class Controller implements Initializable {
         service.setOnSucceeded(e -> {
             try {
 //                System.out.println(String.valueOf(client.getCurrentUsers().size()));
-                currentOnlineCnt.setText(String.valueOf(client.getCurrentUsers().size()));
+                List<String> currentUsers = client.getCurrentUsers();
+                currentOnlineCnt.setText(String.valueOf(currentUsers.size()));
                 CommMessage privateChat = null;
                 CommMessage groupChat = null;
                 try {
@@ -129,6 +136,7 @@ public class Controller implements Initializable {
                     String name = privateChat.getMsgList().get(i);
                     chatList.getItems().add(name);
                 }
+
                 String chattingTo = chatList.getSelectionModel().getSelectedItem();
                 CopyOnWriteArrayList<Message> chats;
                 if (chattingTo != null) { //check income msg in the current window
@@ -149,6 +157,7 @@ public class Controller implements Initializable {
                         }
                     }
                 }
+
 
             } catch (IOException ex) {
 //                throw new RuntimeException(ex);
@@ -210,6 +219,7 @@ public class Controller implements Initializable {
                         }
 
                         if (chats != null) {
+
                             if (!allChats.containsKey(t1)) {
                                 allChats.put(t1, new ArrayList<>());
                             }else{
@@ -368,6 +378,24 @@ public class Controller implements Initializable {
 //        chatContentList.getItems().clear();
         inputArea.clear();
 
+    }
+
+    @FXML
+    public void doSendFile(){
+        FileChooser fileChooser = new FileChooser();
+        File selectedFile = fileChooser.showOpenDialog(null);
+        fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Text Files", "*.txt")
+        );
+        if (selectedFile != null) {
+            try {
+                client.sendFile(selectedFile);
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     private static boolean IsGroupChat(String to) {

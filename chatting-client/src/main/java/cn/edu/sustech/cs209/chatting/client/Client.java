@@ -2,9 +2,11 @@ package cn.edu.sustech.cs209.chatting.client;
 
 import cn.edu.sustech.cs209.chatting.common.CommMessage;
 import cn.edu.sustech.cs209.chatting.common.Message;
+import sun.jvm.hotspot.gc.z.ZPageAllocator;
 
 import java.io.*;
 import java.net.Socket;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -83,6 +85,29 @@ public class Client implements Runnable{
         return reply.getType()==200;
     }
 
+    public boolean sendFile(File file) throws IOException, ClassNotFoundException {
+        CommMessage message = new CommMessage(0,"postFile");
+        if(file!=null){
+            System.out.println("Sending file");
+            message.setFileBytes(file.toPath());
+            toServer.writeObject(message);
+            toServer.flush();
+        }
+        CommMessage reply = (CommMessage) fromServer.readObject();
+        return reply.getType()==200;
+    }
+
+    public byte[] getFile(String path) throws IOException, ClassNotFoundException {
+        CommMessage message = new CommMessage(0,"getFile");
+        CopyOnWriteArrayList<String> copyOnWriteArrayList = new CopyOnWriteArrayList<>();
+        copyOnWriteArrayList.add(path);
+        message.setMsgList(copyOnWriteArrayList);
+        toServer.writeObject(message);
+        toServer.flush();
+        CommMessage reply = (CommMessage) fromServer.readObject();
+        return reply.getFileBytes();
+    }
+
     public CopyOnWriteArrayList<Message> getChat(String from) throws IOException, ClassNotFoundException {
         CommMessage getChat = new CommMessage(1,"getChat");
         CopyOnWriteArrayList<String> params = new CopyOnWriteArrayList<>();
@@ -117,6 +142,15 @@ public class Client implements Runnable{
         CommMessage reply = (CommMessage) fromServer.readObject();
         return reply.getType()==200;
     }
+
+    public void setSocket(Socket socket) throws IOException {
+        this.socket = socket;
+        inputStream=socket.getInputStream();
+//        fromServer = new ObjectInputStream(stream);
+        toServer = new ObjectOutputStream(socket.getOutputStream());
+        fromServer = new ObjectInputStream(inputStream);
+    }
+
     @Override
     public void run() {
         while (true){

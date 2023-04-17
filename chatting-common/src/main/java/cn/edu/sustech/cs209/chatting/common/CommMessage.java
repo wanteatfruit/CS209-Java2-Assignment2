@@ -1,6 +1,10 @@
 package cn.edu.sustech.cs209.chatting.common;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.Serializable;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -13,6 +17,8 @@ public class CommMessage implements Serializable {
 
      CopyOnWriteArrayList<Message> chats = new CopyOnWriteArrayList<>();
      Message chat= null;
+
+     byte[] fileBytes;
 
     public CommMessage(int type, String msg){
         this.type = type ;
@@ -33,6 +39,8 @@ public class CommMessage implements Serializable {
         return chats;
     }
 
+
+
     public void setChats(CopyOnWriteArrayList<Message> chats) {
         this.chats = chats;
     }
@@ -47,6 +55,14 @@ public class CommMessage implements Serializable {
 
     public Message getChat() {
         return chat;
+    }
+
+    public void setFileBytes(Path path) throws IOException {
+        fileBytes = Files.readAllBytes(path);
+    }
+
+    public byte[] getFileBytes() {
+        return fileBytes;
     }
 
     public int getType() {

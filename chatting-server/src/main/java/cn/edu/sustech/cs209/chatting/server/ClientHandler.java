@@ -45,10 +45,10 @@ public class ClientHandler implements Runnable {
 
             }
         } catch (IOException e) {
-            e.printStackTrace();
+//            e.printStackTrace();
 //                throw new RuntimeException(e);
         } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
+//            throw new RuntimeException(e);
         } finally {
             try {
                 socket.close();
@@ -59,7 +59,7 @@ public class ClientHandler implements Runnable {
                 System.out.printf("Connected clients: %d\n",server.socketList.size());
                 System.out.println(server.userNames);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+//                throw new RuntimeException(e);
             }
         }
 
@@ -77,8 +77,22 @@ public class ClientHandler implements Runnable {
             case "postGroupChat":
                 postGroupChat(msg);
                 break;
-
+            case "postFile":
+                postFile(msg);
+                break;
         }
+    }
+
+    public void postFile(CommMessage msg) throws IOException {
+        byte[] fileBytes = msg.getFileBytes();
+        System.out.println("Storing ifle");
+        File file = new File("D:\\SUSTech2023S\\CS209\\CS209-Java2-Assignment2\\chatting-server\\src\\main\\java\\cn\\edu\\sustech\\cs209\\chatting\\server\\files\\file.txt");
+        FileOutputStream fileOutputStream = new FileOutputStream(file);
+        fileOutputStream.write(fileBytes);
+        fileOutputStream.close();
+        CommMessage reply = new CommMessage(200,"chat");
+        out.writeObject(reply);
+        out.flush();
     }
 
     public void postGroupChat(CommMessage msg) throws IOException {
@@ -163,7 +177,14 @@ public class ClientHandler implements Runnable {
             case "getGroupChat":
                 sendGroupChat(msg);
                 break;
+            case "getFile":
+                sendFile(msg);
+                break;
         }
+    }
+
+    public void sendFile(CommMessage comm){
+
     }
 
     public void sendNewGroupInit() throws IOException {
