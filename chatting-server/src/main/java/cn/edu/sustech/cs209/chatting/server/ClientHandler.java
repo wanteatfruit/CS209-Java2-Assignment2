@@ -3,6 +3,7 @@ package cn.edu.sustech.cs209.chatting.server;
 import cn.edu.sustech.cs209.chatting.common.CommMessage;
 import cn.edu.sustech.cs209.chatting.common.Message;
 
+import javax.swing.plaf.synth.SynthEditorPaneUI;
 import java.io.*;
 import java.net.Socket;
 import java.util.*;
@@ -102,7 +103,8 @@ public class ClientHandler implements Runnable {
     public void postFile(CommMessage msg) throws IOException {
         byte[] fileBytes = msg.getFileBytes();
         System.out.println("Storing file");
-        File file = new File("D:\\SUSTech2023S\\CS209\\CS209-Java2-Assignment2\\chatting-server\\src\\main\\java\\cn\\edu\\sustech\\cs209\\chatting\\server\\files\\file.txt");
+        System.out.println(System.getProperty("user.dir"));
+        File file = new File("files/"+msg.getMsgList().get(0));
         FileOutputStream fileOutputStream = new FileOutputStream(file);
         fileOutputStream.write(fileBytes);
         fileOutputStream.close();

@@ -102,6 +102,9 @@ public class Client implements Runnable{
         if(file!=null){
             System.out.println("Sending file");
             message.setFileBytes(file.toPath());
+            CopyOnWriteArrayList<String> name = new CopyOnWriteArrayList<>();
+            name.add(file.getName());
+            message.setMsgList(name);
             toServer.writeObject(message);
             toServer.flush();
         }
