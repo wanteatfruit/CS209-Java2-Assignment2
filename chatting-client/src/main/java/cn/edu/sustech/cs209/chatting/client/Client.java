@@ -15,7 +15,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Client implements Runnable{
     public static final String DELIMETER = ", ";
-    private Socket socket= null;
+    private Socket socket = null;
     private ObjectInputStream fromServer;
     private InputStream inputStream;
     private ObjectOutputStream toServer;
@@ -23,11 +23,11 @@ public class Client implements Runnable{
 
     int currentUser;
 
-    public Client(Socket s,Controller c) throws IOException {
-        socket=s;
+    public Client(Socket s, Controller c) throws IOException {
+        socket = s;
         controller=c;
         System.out.println("Initializing client");
-        System.out.println("get stream" );
+        System.out.println("get stream");
         inputStream=socket.getInputStream();
 //        fromServer = new ObjectInputStream(stream);
         toServer = new ObjectOutputStream(socket.getOutputStream());
@@ -36,7 +36,7 @@ public class Client implements Runnable{
         System.out.println("Connected to server");
     }
 
-    public boolean postLogin(String username,String password) throws IOException, ClassNotFoundException {
+    public boolean postLogin(String username, String password) throws IOException, ClassNotFoundException {
 
         System.out.println("Logging in "+username);
         CommMessage login = new CommMessage(0,"login");

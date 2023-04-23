@@ -55,6 +55,8 @@ public class Controller implements Initializable {
     String pw;
     Client client;
 
+
+
     HashMap<String, ArrayList<Message>> allChats = new LinkedHashMap<>();
 
     private UpdateCheckService service;
@@ -415,11 +417,9 @@ public class Controller implements Initializable {
 
     private static String getChatRoomName(List<String> selectedNames) {
         String chatRoomName;
-        if (selectedNames.size() > 3) {
-            chatRoomName = String.join(", ", selectedNames.subList(0, 3)) + "... (" + selectedNames.size() + ")";
-        } else {
+
             chatRoomName = String.join(", ", selectedNames) + " (" + selectedNames.size() + ")";
-        }
+
         return chatRoomName;
     }
 
